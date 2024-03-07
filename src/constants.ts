@@ -86,6 +86,20 @@ export const EFF_CCR:eff[] = [
 	{ id: 'ccr', label: 'CCR', address: '\x29' },
 ]
 
+interface autotransition_eff {
+	id: string
+	label: string
+	writeByte: string
+	readByte: string
+}
+
+export const AUTOTRANSITION_EFF:autotransition_eff[] = [
+	//page 14
+	{ id: 'mp2_main', label: 'MP2 Main, or Standard Config', writeByte: '\x00', readByte: '\x70' },
+	{ id: 'mp2_sub', label: 'MP2 Sub', writeByte: '\x01', readByte: '\x71' },
+	{ id: 'mp2_both', label: 'MP2 Main/Sub (Both)', writeByte: '\x02', readByte: '\x72' },
+]
+
 interface bus {
 	id: string
 	label: string

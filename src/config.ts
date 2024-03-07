@@ -9,6 +9,13 @@ export interface ModuleConfig {
 export function GetConfigFields(): SomeCompanionConfigField[] {
 	return [
 		{
+			type: 'static-text',
+			id: 'info',
+			label: 'Information',
+			width: 12,
+			value: 'This module is for controlling Sony XVS series switchers.',
+		},
+		{
 			type: 'textinput',
 			id: 'host',
 			label: 'Target IP',
