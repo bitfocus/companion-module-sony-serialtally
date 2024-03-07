@@ -1,5 +1,3 @@
-import type { xvsInstance } from './main.js'
-
 interface models {
 	id: string
 	label: string

@@ -2,8 +2,7 @@ import { InstanceStatus, TCPHelper } from '@companion-module/base'
 import type { xvsInstance } from './main.js'
 import * as constants from './constants.js'
 
-import { UpdateActions } from './actions.js'
-import { UpdateVariableDefinitions, CheckVariables } from './variables.js'
+import { CheckVariables } from './variables.js'
 
 export function initConnection(self: xvsInstance): void {
 	//create socket connection
