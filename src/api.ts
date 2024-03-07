@@ -134,6 +134,30 @@ export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void
 	}
 }
 
+export function transitionME(self: xvsInstance, effId: string, cmdId: string, transRate: number) {
+	self.log('debug', `transitionME: ${effId}, ${cmdId}`)
+	let buffer = Buffer.alloc(4)
+
+	//look up the effect address
+	let eff: any = constants.EFF.find((x) => x.id === effId)
+
+	//look up the command
+	let cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
+
+	if (eff && cmd) {
+		let effAddress: number = eff.address
+		let cmdAddress: number = cmd.writeByte
+
+		buffer.writeUInt8(0x06, 0) //6 bytes is the length of the command
+		buffer.writeUInt8(effAddress, 1) //effect address
+		buffer.writeUInt8(cmd, 2) //command
+		buffer.writeUInt8(0x16, 3) //command
+		buffer.writeUInt8(0x00, 4) //command
+		buffer.writeUInt8(transRate, 5) //command
+		sendCommand(self, buffer)
+	}
+}
+
 function sendCommand(self: xvsInstance, buffer: Buffer): void {
 	if (self.tcp !== undefined && self.tcp.isConnected == true) {
 		self.log('debug', `Sending: ${buffer.toString('hex')}`)
