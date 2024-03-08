@@ -8,25 +8,25 @@ export function initConnection(self: xvsInstance): void {
 	//create socket connection
 	self.log('debug', 'initConnection')
 
-	if (self.config.host !== '') {
+	if (self.config.host && self.config.host !== '') {
 		self.log('info', `Connecting to ${self.config.host}`)
 		self.tcp = new TCPHelper(self.config.host, self.config.port)
 
 		self.tcp.on('connect', () => {
 			self.log('debug', 'Connected')
 			self.updateStatus(InstanceStatus.Ok) // Set status to OK
-			//start an interval to read states every 500ms
+			//start an interval to read states
 			self.INTERVAL = setInterval(() => {
 				readStates(self)
-			}, 500)
+			}, self.config.pollInterval)
 		})
 
-		self.tcp.on('data', (data) => {
+		self.tcp.on('data', (data: any) => {
 			self.log('debug', `Received data: ${data}`)
-			processData(data) //process that data for feedbacks and variables
+			processData(self, data) //process that data for feedbacks and variables
 		})
 
-		self.tcp.on('error', (err) => {
+		self.tcp.on('error', (err:  any) => {
 			self.log('error', `Error: ${err}`)
 		})
 	}
@@ -48,27 +48,27 @@ export function readStates(self: xvsInstance): void {
 	//read m/e states
 	for (let eff of effs) {
 		for (let bus of busses) {
-			let buffer = Buffer.alloc(4)
+			let buffer = Buffer.alloc(3)
 
 			buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
 			buffer.writeUInt8(eff.address, 1) //effect address
 			buffer.writeUInt8(bus.readByte, 2) //bus address
-			self.tcp.send(buffer)
+			sendCommand(self, buffer)
 		}
 	}
 
 	//read aux states
 	for (let aux of auxes) {
-		let buffer = Buffer.alloc(4)
+		let buffer = Buffer.alloc(3)
 
 		buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
 		buffer.writeUInt8(aux.address, 1) //aux address
 		buffer.writeUInt8(0x40, 2) //read command
-		self.tcp.send(buffer)
+		sendCommand(self, buffer)
 	}
 }
 
-function processData(data: Buffer): void {
+function processData(self: xvsInstance, data: Buffer): void {
 	//parse the data and update feedbacks and variables
 
 	if (Number(data) == 0x84) {
@@ -76,12 +76,50 @@ function processData(data: Buffer): void {
 	}
 	else {
 		//this is the real response
+		let effAddress: number = data.readUInt8(1)
+		let busAddress: number = data.readUInt8(2)
+		let sourceAddressByte1: number = data.readUInt8(3)
+		let sourceAddressByte2: number = data.readUInt8(4)
+
+		//look up the effect, bus, and source addresses
+		let eff: any = constants.EFF.find((x) => x.address === effAddress)
+		let bus: any
+		let source: any
+
+		if (self.config.model == 'xvs-9000') {
+			bus = constants.BUSSES_XVS9000.find((x) => x.readByte === busAddress)
+			source = constants.SOURCES_XVS9000.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
+		}
+
+		if (eff && bus && source) {
+			self.DATA[eff.id][bus.id] = source.id
+		}
+		else {
+			//maybe this is an aux
+			let auxAddress: number = data.readUInt8(1)
+			let sourceAddressByte1: number = data.readUInt8(2)
+			let sourceAddressByte2: number = data.readUInt8(3)
+
+			let aux: any = constants.EFF_AUX.find((x) => x.address === auxAddress)
+			let source: any
+
+			if (self.config.model == 'xvs-9000') {
+				source = constants.SOURCES_XVS9000.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
+			}
+
+			if (aux && source) {
+				self.DATA[aux.id] = source.id
+			}
+		}
+
+		self.checkFeedbacks();
+		CheckVariables(self);
 	}
 }
 
 export function xptME(self: xvsInstance, effId: string, busId: string, sourceId: string): void {
 	self.log('debug', `xptME: ${effId}, ${busId}, ${sourceId}`)
-	let buffer = Buffer.alloc(4)
+	let buffer = Buffer.alloc(5)
 
 	//look up the effect, bus, and source addresses
 	let eff: any = constants.EFF.find((x) => x.id === effId)
@@ -110,7 +148,7 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 
 export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void {
 	self.log('debug', `xptAUX: ${auxId}, ${sourceId}`)
-	let buffer = Buffer.alloc(4)
+	let buffer = Buffer.alloc(5)
 
 	//look up the aux and source addresses
 	let aux: any = constants.EFF_AUX.find((x) => x.id === auxId)
@@ -136,7 +174,7 @@ export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void
 
 export function transitionME(self: xvsInstance, effId: string, cmdId: string, transRate: number) {
 	self.log('debug', `transitionME: ${effId}, ${cmdId}`)
-	let buffer = Buffer.alloc(4)
+	let buffer = Buffer.alloc(7)
 
 	//look up the effect address
 	let eff: any = constants.EFF.find((x) => x.id === effId)
@@ -148,19 +186,24 @@ export function transitionME(self: xvsInstance, effId: string, cmdId: string, tr
 		let effAddress: number = eff.address
 		let cmdAddress: number = cmd.writeByte
 
+		//take the transRate and split the value into two bytes
+		let transRateByte1: number = (transRate >> 8) & 0xFF
+		let transRateByte2: number = transRate & 0xFF
+
 		buffer.writeUInt8(0x06, 0) //6 bytes is the length of the command
 		buffer.writeUInt8(effAddress, 1) //effect address
-		buffer.writeUInt8(cmd, 2) //command
+		buffer.writeUInt8(cmdAddress, 2) //command
 		buffer.writeUInt8(0x16, 3) //command
 		buffer.writeUInt8(0x00, 4) //command
-		buffer.writeUInt8(transRate, 5) //command
+		buffer.writeUInt8(transRateByte1, 5) //command
+		buffer.writeUInt8(transRateByte2, 6) //command
 		sendCommand(self, buffer)
 	}
 }
 
 export function transitionMECancel(self: xvsInstance, effId: string, cmdId: string) {
 	self.log('debug', `transitionMECancel: ${effId}, ${cmdId}`)
-	let buffer = Buffer.alloc(4)
+	let buffer = Buffer.alloc(5)
 
 	//look up the effect address
 	let eff: any = constants.EFF.find((x) => x.id === effId)
@@ -174,7 +217,7 @@ export function transitionMECancel(self: xvsInstance, effId: string, cmdId: stri
 
 		buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
 		buffer.writeUInt8(effAddress, 1) //effect address
-		buffer.writeUInt8(cmd, 2) //command
+		buffer.writeUInt8(cmdAddress, 2) //command
 		buffer.writeUInt8(0x19, 3) //command
 		buffer.writeUInt8(0x00, 4) //command
 		sendCommand(self, buffer)
@@ -183,7 +226,7 @@ export function transitionMECancel(self: xvsInstance, effId: string, cmdId: stri
 
 export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: string) {
 	self.log('debug', `transitionME: ${effId}, ${cmd}`)
-	let buffer = Buffer.alloc(3)
+	let buffer = Buffer.alloc(4)
 
 	//look up the effect address
 	let eff: any = constants.EFF.find((x) => x.id === effId)
@@ -210,7 +253,7 @@ export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: s
 
 export function recallSnapshot(self: xvsInstance, regionSelectPart1: string[], registerNumber: number, regionSelectPart2: Number[], regionselectPart3: string[]) {
 	self.log('debug', `recallSnapshot: ${regionSelectPart1}, ${registerNumber}, ${regionSelectPart2}, ${regionselectPart3}`)
-	let buffer = Buffer.alloc(6)
+	let buffer = Buffer.alloc(7)
 
 	let byte3: number = 0x00
 	let byte5: number = 0x00
@@ -270,7 +313,7 @@ export function recallSnapshot(self: xvsInstance, regionSelectPart1: string[], r
 
 export function macroRecall(self: xvsInstance, macroNumber: string) {
 	self.log('debug', `macroRecall: ${macroNumber}`)
-	let buffer = Buffer.alloc(6)
+	let buffer = Buffer.alloc(7)
 
 	let macroNumberByte1: number = 0
 	let macroNumberByte2: number = 0
@@ -280,7 +323,7 @@ export function macroRecall(self: xvsInstance, macroNumber: string) {
 	macroNumberByte1 = (macroNumberInt >> 8) & 0xFF
 	macroNumberByte2 = macroNumberInt & 0xFF
 
-	buffer.writeUInt8(0x03, 0) //3 bytes is the length of the command
+	buffer.writeUInt8(0x03, 0) //6 bytes is the length of the command
 	buffer.writeUInt8(0x22, 1) //command
 	buffer.writeUInt8(0x91, 2) //command
 	buffer.writeUInt8(0x00, 3) //command
@@ -292,7 +335,7 @@ export function macroRecall(self: xvsInstance, macroNumber: string) {
 
 export function macroTake(self: xvsInstance) {
 	self.log('debug', `macroTake`)
-	let buffer = Buffer.alloc(4)
+	let buffer = Buffer.alloc(5)
 
 	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
 	buffer.writeUInt8(0x22, 1) //command

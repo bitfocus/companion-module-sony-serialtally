@@ -3,7 +3,10 @@ import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
 export interface ModuleConfig {
 	host: string
 	port: number
-	model: string
+	model: string,
+	advanced: boolean,
+	pollInterval: number,
+	isVisible: boolean
 }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
@@ -42,6 +45,30 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 				{ id: 'xvsg1', label: 'XVS-G1' },
 				{ id: 'mlsx1', label: 'MLS-X1' }
 			],
+		},
+		{
+			type: 'static-text',
+			id: 'advancedSeperator',
+			label: '',
+			width: 12,
+			value: '<hr />'
+		},
+		{
+			type: 'checkbox',
+			id: 'advanced',
+			label: 'Advanced settings',
+			width: 12,
+			default: false
+		},
+		{
+			type: 'number',
+			id: 'pollInterval',
+			label: 'Polling Interval (ms)',
+			width: 4,
+			min: 100,
+			max: 60000,
+			default: 500,
+			isVisible: (options) => !!options['advanced']
 		}
 	]
 }

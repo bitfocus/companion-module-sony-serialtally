@@ -1,4 +1,4 @@
-import { InstanceBase, runEntrypoint, InstanceStatus, SomeCompanionConfigField, TCPHelper } from '@companion-module/base'
+import { InstanceBase, runEntrypoint, InstanceStatus, SomeCompanionConfigField } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
 import { UpdateVariableDefinitions } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
@@ -13,7 +13,7 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 		super(internal)
 	}
 
-	public tcp = undefined
+	public tcp: any
 	public DATA: any = {}
 	public INTERVAL: any = undefined
 

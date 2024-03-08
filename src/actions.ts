@@ -1,5 +1,5 @@
 import type { xvsInstance } from './main.js'
-import { CompanionActionDefinition, CompanionActionDefinitions, SomeCompanionConfigField, CompanionInputFieldCheckbox } from '@companion-module/base'
+import { CompanionActionDefinitions, CompanionInputFieldCheckbox } from '@companion-module/base'
 import * as constants from './constants.js'
 import { xptME, xptAUX, transitionME, transitionMECancel, keyOnOff, recallSnapshot, macroRecall, macroTake } from './api.js'
 
@@ -280,7 +280,7 @@ export function UpdateActions(self: xvsInstance): void {
 	actions.macroTake = {
 		name: 'Macro Take',
 		options: [],
-		callback: async (event) => {
+		callback: async () => {
 			macroTake(self)
 		}
 	}

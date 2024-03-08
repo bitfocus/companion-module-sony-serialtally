@@ -1,9 +1,9 @@
-import { combineRgb } from '@companion-module/base'
+import { combineRgb, CompanionFeedbackDefinitions } from '@companion-module/base'
 import type { xvsInstance } from './main.js'
 import * as constants from './constants.js'
 
 export function UpdateFeedbacks(self: xvsInstance): void {
-	let feedbacks: any = {}
+	let feedbacks: CompanionFeedbackDefinitions = {}
 
 	let BUSSES: any[] = []
 	let SOURCES: any[] = []

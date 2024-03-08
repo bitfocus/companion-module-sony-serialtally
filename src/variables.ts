@@ -7,22 +7,18 @@ export function UpdateVariableDefinitions(self: xvsInstance): void {
 	let EFF: any[] = constants.EFF
 
 	let BUSSES: any[] = []
-	let SOURCES: any[] = []
 
 	let AUXES: any[] = []
 
 	switch(self.config.model) {
 		case 'xvs-9000':
 			BUSSES = constants.BUSSES_XVS9000
-			SOURCES = constants.SOURCES_XVS9000
 			break
 		case 'xvs-g1':
 			BUSSES = constants.BUSSES_XVSG1
-			SOURCES = constants.SOURCES_XVSG1
 			break
 		case 'mls-x1':
 			BUSSES = constants.BUSSES_MLSX1
-			SOURCES = constants.SOURCES_MLSX1
 			break
 	}
 
@@ -78,11 +74,15 @@ export function CheckVariables(self: xvsInstance): void {
 
 	for (let eff of EFF) {
 		for (let bus of BUSSES) {
-			variableObj[`${eff.id}_${bus.id}`] = self.DATA[eff.id][bus.id]
+			let sourceAddress = self.DATA[eff.id][bus.id]
+			let sourceName = SOURCES.find((source) => source.id === sourceAddress).label
+			variableObj[`${eff.id}_${bus.id}`] = sourceName
 		}
 	}
 
 	for (let aux of AUXES) {
-		variableObj[`${aux.id}`] = self.DATA[aux.id]
+		let sourceAddress = self.DATA[aux.id]
+		let sourceName = SOURCES.find((source) => source.id === sourceAddress).label
+		variableObj[`${aux.id}`] = sourceName
 	}
 }
