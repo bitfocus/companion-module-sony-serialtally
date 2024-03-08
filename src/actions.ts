@@ -1,7 +1,7 @@
 import type { xvsInstance } from './main.js'
-import { CompanionActionDefinition, CompanionActionDefinitions, SomeCompanionConfigField } from '@companion-module/base'
+import { CompanionActionDefinition, CompanionActionDefinitions, SomeCompanionConfigField, CompanionInputFieldCheckbox } from '@companion-module/base'
 import * as constants from './constants.js'
-import { xptME, xptAUX, transitionME} from './api.js'
+import { xptME, xptAUX, transitionME, transitionMECancel, keyOnOff, recallSnapshot, macroRecall, macroTake } from './api.js'
 
 
 
@@ -122,5 +122,168 @@ export function UpdateActions(self: xvsInstance): void {
 		}
 	}
 
-	self.setActionDefinitions(actions)
+	actions.transitionMECancel = {
+		name: 'Transition M/E Cancel',
+		options: [
+			{
+				type: 'dropdown',
+				id: 'eff',
+				label: 'M/E Selection',
+				default: constants.EFF[0].id,
+				choices: constants.EFF,
+			},
+			{
+				type: 'dropdown',
+				id: 'cmd',
+				label: 'Command',
+				default: constants.AUTOTRANSITION_EFF[0].id,
+				choices: constants.AUTOTRANSITION_EFF,
+			}
+		],
+		callback: async (event) => {
+			let eff: any = event.options.eff
+			let cmd: any = event.options.cmd
+			transitionMECancel(self, eff, cmd)
+		}
+	}
+
+	actions.keyOnOff = {
+		name: 'Key On/Off',
+		options: [
+			{
+				type: 'dropdown',
+				id: 'eff',
+				label: 'M/E Selection',
+				default: constants.EFF[0].id,
+				choices: constants.EFF,
+			},
+			{
+				type: 'dropdown',
+				id: 'key',
+				label: 'Key Number',
+				default: constants.KEYS[0].id,
+				choices: constants.KEYS,
+			},
+			{
+				type: 'dropdown',
+				id: 'onoff',
+				label: 'On/Off',
+				default: 'on',
+				choices: [
+					{ id: 'on', label: 'On' },
+					{ id: 'off', label: 'Off' }
+				]
+			}
+		],
+		callback: async (event) => {
+			let eff: any = event.options.eff
+			let cmd: any = event.options.cmd
+			let key: any = event.options.key
+			keyOnOff(self, eff, key, cmd)
+		}
+	}
+
+	let reversedEFF = constants.EFF.slice().reverse();
+
+	actions.recallSnapshot = {
+		name: 'Recall Snapshot',
+		options: [],
+		callback: async (event) => {
+			let regionSelectPart1: string[] = []
+			let registerNumber: any = event.options.registerNumber
+			let regionSelectPart2: number[] = []
+			let regionSelectPart3: string[] = []
+
+			for (let eff of reversedEFF) {
+				if (event.options[`regionSelect_part1_${eff.id}`]) {
+					regionSelectPart1.push(eff.id)
+				}
+			}
+
+			for (let i = 8; i > 0; i--) {
+				if (event.options[`regionSelect_part2_${i}`]) {
+					regionSelectPart2.push(i)
+				}
+			}
+
+			for (let eff of reversedEFF) {
+				if (event.options[`regionSelect_part3_${eff.id}`]) {
+					regionSelectPart3.push(eff.id)
+				}
+			}
+
+			recallSnapshot(self, regionSelectPart1, registerNumber, regionSelectPart2, regionSelectPart3)
+		}
+	}
+
+	for (let eff of reversedEFF) {
+		//build an array of checkboxes for each EFF to push into the options for Region Select Part 1
+		let regionOption: CompanionInputFieldCheckbox = {
+			type: 'checkbox',
+			id: `regionSelect_part1_${eff.id}`,
+			label: `Region Select Part 1 - ${eff.label}`,
+			default: false
+		};
+		actions.recallSnapshot.options.push(regionOption);
+	}
+
+	//now add register number
+	actions.recallSnapshot.options.push({
+		type: 'number',
+		id: 'registerNumber',
+		label: 'Register Number',
+		default: 1,
+		min: 1,
+		max: 99
+	});
+
+	//now add region select part 2, user 8-user 1
+	for (let i = 8; i > 0; i--) {
+		let regionOption: CompanionInputFieldCheckbox = {
+			type: 'checkbox',
+			id: `regionSelect_part2_${i}`,
+			label: `Region Select Part 2 - User ${i}`,
+			default: false
+		};
+		actions.recallSnapshot.options.push(regionOption);
+	}
+
+	//now add region select part 3, reversed EFF again with 'SUB' added at the end of each name
+	for (let eff of reversedEFF) {
+		let regionOption: CompanionInputFieldCheckbox = {
+			type: 'checkbox',
+			id: `regionSelect_part3_${eff.id}`,
+			label: `Region Select Part 3 - ${eff.label} SUB`,
+			default: false
+		};
+		actions.recallSnapshot.options.push(regionOption);
+	}
+
+	actions.macroRecall = {
+		name: 'Macro Recall',
+		options: [
+			{
+				type: 'number',
+				id: 'macroNumber',
+				label: 'Macro Register Number',
+				default: 1,
+				min: 1,
+				max: 999
+			}
+		],
+		callback: async (event) => {
+			let macroNumber: any = event.options.macroNumber
+			macroRecall(self, macroNumber)
+		}
+	}
+
+	actions.macroTake = {
+		name: 'Macro Take',
+		options: [],
+		callback: async (event) => {
+			macroTake(self)
+		}
+	}
+
+	self.setActionDefinitions(actions);
 }

@@ -109,7 +109,7 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 }
 
 export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void {
-	self.log('debug', `xptAux: ${auxId}, ${sourceId}`)
+	self.log('debug', `xptAUX: ${auxId}, ${sourceId}`)
 	let buffer = Buffer.alloc(4)
 
 	//look up the aux and source addresses
@@ -156,6 +156,151 @@ export function transitionME(self: xvsInstance, effId: string, cmdId: string, tr
 		buffer.writeUInt8(transRate, 5) //command
 		sendCommand(self, buffer)
 	}
+}
+
+export function transitionMECancel(self: xvsInstance, effId: string, cmdId: string) {
+	self.log('debug', `transitionMECancel: ${effId}, ${cmdId}`)
+	let buffer = Buffer.alloc(4)
+
+	//look up the effect address
+	let eff: any = constants.EFF.find((x) => x.id === effId)
+
+	//look up the command
+	let cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
+
+	if (eff && cmd) {
+		let effAddress: number = eff.address
+		let cmdAddress: number = cmd.writeByte
+
+		buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
+		buffer.writeUInt8(effAddress, 1) //effect address
+		buffer.writeUInt8(cmd, 2) //command
+		buffer.writeUInt8(0x19, 3) //command
+		buffer.writeUInt8(0x00, 4) //command
+		sendCommand(self, buffer)
+	}
+}
+
+export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: string) {
+	self.log('debug', `transitionME: ${effId}, ${cmd}`)
+	let buffer = Buffer.alloc(3)
+
+	//look up the effect address
+	let eff: any = constants.EFF.find((x) => x.id === effId)
+
+	//look up the key
+	let key: any = constants.KEYS.find((x) => x.id === keyId)
+
+	if (eff && key) {
+		let effAddress: number = eff.address
+		let keyAddress: number = key.address
+
+		buffer.writeUInt8(0x03, 0) //4 bytes is the length of the command
+		buffer.writeUInt8(effAddress, 1) //effect address
+		if (cmd == 'on') {
+			buffer.writeUInt8(0xDA, 2) //command on
+		}
+		else {
+			buffer.writeUInt8(0x9A, 2) //command off
+		}
+		buffer.writeUInt8(keyAddress, 3) //key number
+		sendCommand(self, buffer)
+	}
+}
+
+export function recallSnapshot(self: xvsInstance, regionSelectPart1: string[], registerNumber: number, regionSelectPart2: Number[], regionselectPart3: string[]) {
+	self.log('debug', `recallSnapshot: ${regionSelectPart1}, ${registerNumber}, ${regionSelectPart2}, ${regionselectPart3}`)
+	let buffer = Buffer.alloc(6)
+
+	let byte3: number = 0x00
+	let byte5: number = 0x00
+	let byte6: number = 0x00
+
+	//create byte 3 - region select 1
+	let regionSelectPart1_bit7 = 0
+	let regionSelectPart1_bit6 = 0
+	let regionSelectPart1_bit5 = regionSelectPart1.includes('me5') ? 1 : 0
+	let regionSelectPart1_bit4 = regionSelectPart1.includes('me4') ? 1 : 0
+	let regionSelectPart1_bit3 = regionSelectPart1.includes('me3') ? 1 : 0
+	let regionSelectPart1_bit2 = regionSelectPart1.includes('me2') ? 1 : 0
+	let regionSelectPart1_bit1 = regionSelectPart1.includes('me1') ? 1 : 0
+	let regionSelectPart1_bit0 = regionSelectPart1.includes('pp') ? 1 : 0
+
+	//now combine them all into a string
+	let byte3_string = `${regionSelectPart1_bit7}${regionSelectPart1_bit6}${regionSelectPart1_bit5}${regionSelectPart1_bit4}${regionSelectPart1_bit3}${regionSelectPart1_bit2}${regionSelectPart1_bit1}${regionSelectPart1_bit0}`
+	byte3 = parseInt(byte3_string, 2) //convert to number with radix of 2 (binary)
+
+	//create byte 5 - region select 2
+	let regionSelectPart2_bit7 = regionSelectPart2.includes(8) ? 1 : 0
+	let regionSelectPart2_bit6 = regionSelectPart2.includes(7) ? 1 : 0
+	let regionSelectPart2_bit5 = regionSelectPart2.includes(6) ? 1 : 0
+	let regionSelectPart2_bit4 = regionSelectPart2.includes(5) ? 1 : 0
+	let regionSelectPart2_bit3 = regionSelectPart2.includes(4) ? 1 : 0
+	let regionSelectPart2_bit2 = regionSelectPart2.includes(3) ? 1 : 0
+	let regionSelectPart2_bit1 = regionSelectPart2.includes(2) ? 1 : 0
+	let regionSelectPart2_bit0 = regionSelectPart2.includes(1) ? 1 : 0
+
+	//now combine them all into a string
+	let byte5_string = `${regionSelectPart2_bit7}${regionSelectPart2_bit6}${regionSelectPart2_bit5}${regionSelectPart2_bit4}${regionSelectPart2_bit3}${regionSelectPart2_bit2}${regionSelectPart2_bit1}${regionSelectPart2_bit0}`
+	byte5 = parseInt(byte5_string, 2) //convert to number with radix of 2 (binary)
+
+	//create byte 6 - region select 3
+	let regionSelectPart3_bit7 = 0
+	let regionSelectPart3_bit6 = 0
+	let regionSelectPart3_bit5 = regionselectPart3.includes('me5') ? 1 : 0
+	let regionSelectPart3_bit4 = regionselectPart3.includes('me4') ? 1 : 0
+	let regionSelectPart3_bit3 = regionselectPart3.includes('me3') ? 1 : 0
+	let regionSelectPart3_bit2 = regionselectPart3.includes('me2') ? 1 : 0
+	let regionSelectPart3_bit1 = regionselectPart3.includes('me1') ? 1 : 0
+	let regionSelectPart3_bit0 = regionselectPart3.includes('pp') ? 1 : 0
+
+	//now combine them all into a string
+	let byte6_string = `${regionSelectPart3_bit7}${regionSelectPart3_bit6}${regionSelectPart3_bit5}${regionSelectPart3_bit4}${regionSelectPart3_bit3}${regionSelectPart3_bit2}${regionSelectPart3_bit1}${regionSelectPart3_bit0}`
+	byte6 = parseInt(byte6_string, 2) //convert to number with radix of 2 (binary)
+
+	buffer.writeUInt8(0x06, 0) //6 bytes is the length of the command
+	buffer.writeUInt8(0x21, 1) //command
+	buffer.writeUInt8(0x90, 2) //command
+	buffer.writeUInt8(byte3, 3) //command
+	buffer.writeUInt8(registerNumber, 4) //command
+	buffer.writeUInt8(byte5, 5) //command
+	buffer.writeUInt8(byte6, 6) //command
+	sendCommand(self, buffer)
+}
+
+export function macroRecall(self: xvsInstance, macroNumber: string) {
+	self.log('debug', `macroRecall: ${macroNumber}`)
+	let buffer = Buffer.alloc(6)
+
+	let macroNumberByte1: number = 0
+	let macroNumberByte2: number = 0
+
+	//take the macroNumber, convert it to an integer, and then split the value into two bytes
+	let macroNumberInt: number = parseInt(macroNumber)
+	macroNumberByte1 = (macroNumberInt >> 8) & 0xFF
+	macroNumberByte2 = macroNumberInt & 0xFF
+
+	buffer.writeUInt8(0x03, 0) //3 bytes is the length of the command
+	buffer.writeUInt8(0x22, 1) //command
+	buffer.writeUInt8(0x91, 2) //command
+	buffer.writeUInt8(0x00, 3) //command
+	buffer.writeUInt8(0x17, 4) //command
+	buffer.writeUInt8(macroNumberByte1, 5) //macro number byte 1
+	buffer.writeUInt8(macroNumberByte2, 6) //macro number byte 2
+	sendCommand(self, buffer)
+}
+
+export function macroTake(self: xvsInstance) {
+	self.log('debug', `macroTake`)
+	let buffer = Buffer.alloc(4)
+
+	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
+	buffer.writeUInt8(0x22, 1) //command
+	buffer.writeUInt8(0x90, 2) //command
+	buffer.writeUInt8(0x00, 3) //command
+	buffer.writeUInt8(0x1C, 4) //command
+	sendCommand(self, buffer)
+
 }
 
 function sendCommand(self: xvsInstance, buffer: Buffer): void {

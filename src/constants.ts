@@ -210,6 +210,23 @@ export const BUSSES_CCR:bus[] = [
 	{ id: 'ccr4', label: 'CCR 4', readByte: '\x43', writeByte: '\xC3' },
 ]
 
+interface key {
+	id: string
+	label: string
+	address: number
+}
+
+export const KEYS: key[] = [
+	{ id: 'key1', label: 'Key 1', address: 0x10 },
+	{ id: 'key2', label: 'Key 2', address: 0x30 },
+	{ id: 'key3', label: 'Key 3', address: 0x40 },
+	{ id: 'key4', label: 'Key 4', address: 0x70 },
+	{ id: 'key5', label: 'Key 5', address: 0x90 },
+	{ id: 'key6', label: 'Key 6', address: 0xB0 },
+	{ id: 'key7', label: 'Key 7', address: 0xD0 },
+	{ id: 'key8', label: 'Key 8', address: 0xF0 },
+]
+
 interface source {
 	id: number
 	label: string,
