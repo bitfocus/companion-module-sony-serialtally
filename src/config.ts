@@ -6,7 +6,6 @@ export interface ModuleConfig {
 	model: string,
 	advanced: boolean,
 	pollInterval: number,
-	isVisible: boolean
 }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
@@ -68,6 +67,30 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			min: 100,
 			max: 60000,
 			default: 500,
+			isVisible: (options) => !!options['advanced']
+		},
+		{
+			type: 'static-text',
+			id: 'pollInfo',
+			label: '',
+			width: 8,
+			value: 'This is the interval at which the module will poll the switcher for status updates.',
+			isVisible: (options) => !!options['advanced']
+		},
+		{
+			type: 'checkbox',
+			id: 'verbose',
+			label: 'Verbose logging',
+			width: 4,
+			default: false,
+			isVisible: (options) => !!options['advanced']
+		},
+		{
+			type: 'static-text',
+			id: 'verboseInfo',
+			label: '',
+			width: 8,
+			value: 'Enable this to log all commands and responses to the debug log.',
 			isVisible: (options) => !!options['advanced']
 		}
 	]

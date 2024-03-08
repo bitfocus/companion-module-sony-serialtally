@@ -44,6 +44,12 @@ export function readStates(self: xvsInstance): void {
 	if (self.config.model == 'xvs-9000') {
 		busses = constants.BUSSES_XVS9000
 	}
+	else if (self.config.model == 'xvs-g1') {
+		busses = constants.BUSSES_XVSG1
+	}
+	else if (self.config.model == 'mls-x1') {
+		busses = constants.BUSSES_MLSX1
+	}
 
 	//read m/e states
 	for (let eff of effs) {
@@ -90,6 +96,14 @@ function processData(self: xvsInstance, data: Buffer): void {
 			bus = constants.BUSSES_XVS9000.find((x) => x.readByte === busAddress)
 			source = constants.SOURCES_XVS9000.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
 		}
+		else if (self.config.model == 'xvs-g1') {
+			bus = constants.BUSSES_XVSG1.find((x) => x.readByte === busAddress)
+			source = constants.SOURCES_XVSG1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
+		}
+		else if (self.config.model == 'mls-x1') {
+			bus = constants.BUSSES_MLSX1.find((x) => x.readByte === busAddress)
+			source = constants.SOURCES_MLSX1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
+		}
 
 		if (eff && bus && source) {
 			self.DATA[eff.id][bus.id] = source.id
@@ -101,10 +115,15 @@ function processData(self: xvsInstance, data: Buffer): void {
 			let sourceAddressByte2: number = data.readUInt8(3)
 
 			let aux: any = constants.EFF_AUX.find((x) => x.address === auxAddress)
-			let source: any
 
 			if (self.config.model == 'xvs-9000') {
 				source = constants.SOURCES_XVS9000.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
+			}
+			else if (self.config.model == 'xvs-g1') {
+				source = constants.SOURCES_XVSG1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
+			}
+			else if (self.config.model == 'mls-x1') {
+				source = constants.SOURCES_MLSX1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
 			}
 
 			if (aux && source) {
@@ -129,6 +148,14 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 	if (self.config.model == 'xvs-9000') {
 		bus = constants.BUSSES_XVS9000.find((x) => x.id === busId)
 		source = constants.SOURCES_XVS9000.find((x) => x.id === parseInt(sourceId))
+	}
+	else if (self.config.model == 'xvs-g1') {
+		bus = constants.BUSSES_XVSG1.find((x) => x.id === busId)
+		source = constants.SOURCES_XVSG1.find((x) => x.id === parseInt(sourceId))
+	}
+	else if (self.config.model == 'mls-x1') {
+		bus = constants.BUSSES_MLSX1.find((x) => x.id === busId)
+		source = constants.SOURCES_MLSX1.find((x) => x.id === parseInt(sourceId))
 	}
 
 	if (bus && source) {
@@ -156,6 +183,12 @@ export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void
 
 	if (self.config.model == 'xvs-9000') {
 		source = constants.SOURCES_XVS9000.find((x) => x.id === parseInt(sourceId))
+	}
+	else if (self.config.model == 'xvs-g1') {
+		source = constants.SOURCES_XVSG1.find((x) => x.id === parseInt(sourceId))
+	}
+	else if (self.config.model == 'mls-x1') {
+		source = constants.SOURCES_MLSX1.find((x) => x.id === parseInt(sourceId))
 	}
 
 	if (source) {
