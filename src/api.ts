@@ -16,9 +16,10 @@ export function initConnection(self: xvsInstance): void {
 			self.log('debug', 'Connected')
 			self.updateStatus(InstanceStatus.Ok) // Set status to OK
 			//start an interval to read states
+			self.log('debug', `Starting interval for reading states every ${self.config.pollInterval || 500}ms`)
 			self.INTERVAL = setInterval(() => {
 				readStates(self)
-			}, self.config.pollInterval)
+			}, self.config.pollInterval || 500)
 		})
 
 		self.tcp.on('data', (data: any) => {
@@ -34,7 +35,6 @@ export function initConnection(self: xvsInstance): void {
 
 export function readStates(self: xvsInstance): void {
 	//loop through each effect and bus to retrieve the state
-	self.log('debug', 'readStates')
 
 	//look up the effect, bus, and source addresses
 	let effs: any = constants.EFF
@@ -59,7 +59,7 @@ export function readStates(self: xvsInstance): void {
 			buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
 			buffer.writeUInt8(eff.address, 1) //effect address
 			buffer.writeUInt8(bus.readByte, 2) //bus address
-			sendCommand(self, buffer)
+			sendCommand(self, buffer, false) //don't log this command
 		}
 	}
 
@@ -70,7 +70,7 @@ export function readStates(self: xvsInstance): void {
 		buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
 		buffer.writeUInt8(aux.address, 1) //aux address
 		buffer.writeUInt8(0x40, 2) //read command
-		sendCommand(self, buffer)
+		sendCommand(self, buffer, false) //don't log this command
 	}
 }
 
@@ -376,12 +376,20 @@ export function macroTake(self: xvsInstance) {
 	buffer.writeUInt8(0x00, 3) //command
 	buffer.writeUInt8(0x1C, 4) //command
 	sendCommand(self, buffer)
-
 }
 
-function sendCommand(self: xvsInstance, buffer: Buffer): void {
+function sendCommand(self: xvsInstance, buffer: Buffer, log: boolean = true): void {
 	if (self.tcp !== undefined && self.tcp.isConnected == true) {
-		self.log('debug', `Sending: ${buffer.toString('hex')}`)
+		if (self.config.verbose == true) {
+			if (log) { //even with verbose mode on, we don't want to log the readStates commands because they come so fast
+				//break the hex string into 2 character chunks
+				let hexString = buffer.toString('hex')
+				let hexArray = hexString.match(/.{1,2}/g)
+				//now join them back together with a space, but only if it is not null
+				let hexStringSpaced = hexArray ? hexArray.join(' ') : ''
+				self.log('debug', `Sending: ${hexStringSpaced}`)
+			}
+		}
 		self.tcp.send(buffer)
 	}
 }

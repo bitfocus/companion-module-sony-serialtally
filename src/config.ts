@@ -6,6 +6,7 @@ export interface ModuleConfig {
 	model: string,
 	advanced: boolean,
 	pollInterval: number,
+	verbose: boolean
 }
 
 export function GetConfigFields(): SomeCompanionConfigField[] {
