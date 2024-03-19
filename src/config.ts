@@ -1,5 +1,5 @@
 import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
-import { Models } from './constants.js'
+import { Models, MODELS } from './constants.js'
 
 export interface ModuleConfig {
 	host: string
@@ -40,12 +40,8 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			id: 'model',
 			label: 'Model',
 			width: 8,
-			default: 'xvs-9000',
-			choices: [
-				{ id: 'xvs-9000', label: 'XVS 9000/8000/7000/6000' },
-				{ id: 'xvs-g1', label: 'XVS-G1' },
-				{ id: 'mls-x1', label: 'MLS-X1' },
-			],
+			default: MODELS[0].id,
+			choices: MODELS,
 		},
 		{
 			type: 'static-text',
@@ -61,7 +57,7 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			width: 12,
 			default: false,
 		},
-		{
+		/*{
 			type: 'number',
 			id: 'pollInterval',
 			label: 'Polling Interval (ms)',
@@ -78,7 +74,7 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			width: 8,
 			value: 'This is the interval at which the module will poll the switcher for status updates.',
 			isVisible: (options) => !!options['advanced'],
-		},
+		},*/
 		{
 			type: 'checkbox',
 			id: 'verbose',
