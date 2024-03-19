@@ -3,8 +3,8 @@ import { SOURCES } from '../constants.js'
 
 export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean {
 	const len = buffer.readUint8(0)
-	if (len < 5 || len > 16 + 5) {
-		console.log('ughhhg', buffer, len)
+
+	if (len < 5) {
 		return false
 	}
 
@@ -17,6 +17,11 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 	}
 
 	if (buffer.readUint8(3) !== 0x50) {
+		return false
+	}
+
+	if (len > 16 + 5) {
+		console.log('ughhhg', 'text too long or something.')
 		return false
 	}
 
