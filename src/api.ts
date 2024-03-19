@@ -2,7 +2,8 @@ import { InstanceStatus, TCPHelper } from '@companion-module/base'
 import type { xvsInstance } from './main.js'
 import * as constants from './constants.js'
 
-import { CheckVariables } from './variables.js'
+//import { CheckVariables } from './variables.js'
+import { INCOMING_HANDLE } from './validators/index.js'
 
 export function initConnection(self: xvsInstance): void {
 	//create socket connection
@@ -11,158 +12,156 @@ export function initConnection(self: xvsInstance): void {
 	if (self.config.host && self.config.host !== '') {
 		self.log('info', `Connecting to ${self.config.host}`)
 		self.tcp = new TCPHelper(self.config.host, self.config.port)
+		self.PROTOCOL_STATE = 'IDLE'
 
 		self.tcp.on('connect', () => {
-			self.log('debug', 'Connected')
-			self.updateStatus(InstanceStatus.Ok) // Set status to OK
-			//start an interval to read states
-			self.log('debug', `Starting interval for reading states every ${self.config.pollInterval || 500}ms`)
-			self.INTERVAL = setInterval(() => {
-				readStates(self)
-			}, self.config.pollInterval || 500)
+			// clear buffer
+			self.incomingData = Buffer.alloc(0)
+
+			// tell the module we are connected, and waiting for ack
+			self.PROTOCOL_STATE = 'WAITING'
+
+			self.log('debug', 'Connected, waiting for ACK')
+			self.updateStatus(InstanceStatus.UnknownWarning) // Set status to OK
 		})
 
 		self.tcp.on('data', (data: any) => {
-			self.log('debug', `Received data: ${data}`)
-			processData(self, data) //process that data for feedbacks and variables
+			self.incomingData = Buffer.concat([self.incomingData, data])
+
+			// check if we have a complete command
+			if (self.incomingData.readUInt8(0) === 0x84) {
+				console.log('removing 84 from buffer (ACK)')
+				// this is an ACK, we can ignore it
+				self.incomingData = self.incomingData.subarray(1)
+				self.updateStatus(InstanceStatus.Ok)
+				self.log('debug', 'ACK received, connected.')
+
+				if (self.PROTOCOL_STATE === 'WAITING') {
+					readStates(self)
+				}
+				self.PROTOCOL_STATE = 'OK'
+			}
+
+			/*if (self.incomingData.length && self.incomingData.readUInt8(0) === 0x0b) {
+				console.log('----------------------------------------------------------------- 0x0b')
+				self.incomingData = self.incomingData.subarray(1)
+			}*/
+
+			if (self.PROTOCOL_STATE === 'OK') {
+				while (self.incomingData.length > 0) {
+					const commandLength = self.incomingData.readUInt8(0)
+					if (self.incomingData.length >= commandLength) {
+						const command = self.incomingData.subarray(0, commandLength + 1)
+						self.incomingData = self.incomingData.subarray(commandLength + 1)
+						self.incomingCommandQueue.push(command)
+					} else {
+						break
+					}
+				}
+			}
+
+			while (self.incomingCommandQueue.length > 0) {
+				const command = self.incomingCommandQueue.shift()
+				if (command) {
+					//console.log('Processing command:', command)
+					processData(self, command)
+				}
+			}
 		})
 
-		self.tcp.on('error', (err:  any) => {
+		self.tcp.on('error', (err: any) => {
 			self.log('error', `Error: ${err}`)
+			self.PROTOCOL_STATE = 'IDLE'
 		})
 	}
 }
 
 export function readStates(self: xvsInstance): void {
 	//loop through each effect and bus to retrieve the state
-
 	//look up the effect, bus, and source addresses
-	let effs: any = constants.EFF
-	let busses: any
-	let auxes: any = constants.EFF_AUX
+	/*
+
+	const effs = constants.MEXPTEffectAddresses
+	const auxes = constants.AUXXPTEffectAddresses
+
+	let busses: constants.Bus[] = []
 
 	if (self.config.model == 'xvs-9000') {
 		busses = constants.BUSSES_XVS9000
-	}
-	else if (self.config.model == 'xvs-g1') {
+	} else if (self.config.model == 'xvs-g1') {
 		busses = constants.BUSSES_XVSG1
-	}
-	else if (self.config.model == 'mls-x1') {
+	} else if (self.config.model == 'mls-x1') {
 		busses = constants.BUSSES_MLSX1
+	} else {
+		self.log('error', `No busses for model ${self.config.model} was found`)
+		return
 	}
 
-	//read m/e states
-	for (let eff of effs) {
-		for (let bus of busses) {
-			let buffer = Buffer.alloc(3)
-
+  //read m/e states
+	let buffer = Buffer.alloc(3)
+	for (const eff of effs) {
+		for (const bus of busses) {
 			buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
 			buffer.writeUInt8(eff.address, 1) //effect address
 			buffer.writeUInt8(bus.readByte, 2) //bus address
-			sendCommand(self, buffer, false) //don't log this command
+			sendCommand(self, buffer, false)
 		}
 	}
 
 	//read aux states
-	for (let aux of auxes) {
-		let buffer = Buffer.alloc(3)
-
+	for (const aux of auxes) {
 		buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
 		buffer.writeUInt8(aux.address, 1) //aux address
 		buffer.writeUInt8(0x40, 2) //read command
-		sendCommand(self, buffer, false) //don't log this command
+		sendCommand(self, buffer, false)
+	}
+*/
+	//read source name setup
+	const buffer = Buffer.alloc(6)
+
+	for (const source of constants.SOURCES[self.config.model]) {
+		buffer.writeUInt8(0x05, 0) //2 bytes is the length of the command
+		buffer.writeUInt8(0x20, 1)
+		buffer.writeUInt8(0x70, 2)
+		buffer.writeUInt8(0x50, 3)
+		buffer.writeUInt8(source.byte1, 4)
+		buffer.writeUInt8(source.byte2, 5)
+		sendCommand(self, buffer, false)
 	}
 }
 
 function processData(self: xvsInstance, data: Buffer): void {
-	//parse the data and update feedbacks and variables
+	INCOMING_HANDLE(self, data)
 
-	if (Number(data) == 0x84) {
-		//this is an ACK
-	}
-	else {
-		//this is the real response
-		let effAddress: number = data.readUInt8(1)
-		let busAddress: number = data.readUInt8(2)
-		let sourceAddressByte1: number = data.readUInt8(3)
-		let sourceAddressByte2: number = data.readUInt8(4)
-
-		//look up the effect, bus, and source addresses
-		let eff: any = constants.EFF.find((x) => x.address === effAddress)
-		let bus: any
-		let source: any
-
-		if (self.config.model == 'xvs-9000') {
-			bus = constants.BUSSES_XVS9000.find((x) => x.readByte === busAddress)
-			source = constants.SOURCES_XVS9000.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
-		}
-		else if (self.config.model == 'xvs-g1') {
-			bus = constants.BUSSES_XVSG1.find((x) => x.readByte === busAddress)
-			source = constants.SOURCES_XVSG1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
-		}
-		else if (self.config.model == 'mls-x1') {
-			bus = constants.BUSSES_MLSX1.find((x) => x.readByte === busAddress)
-			source = constants.SOURCES_MLSX1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
-		}
-
-		if (eff && bus && source) {
-			self.DATA[eff.id][bus.id] = source.id
-		}
-		else {
-			//maybe this is an aux
-			let auxAddress: number = data.readUInt8(1)
-			let sourceAddressByte1: number = data.readUInt8(2)
-			let sourceAddressByte2: number = data.readUInt8(3)
-
-			let aux: any = constants.EFF_AUX.find((x) => x.address === auxAddress)
-
-			if (self.config.model == 'xvs-9000') {
-				source = constants.SOURCES_XVS9000.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
-			}
-			else if (self.config.model == 'xvs-g1') {
-				source = constants.SOURCES_XVSG1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
-			}
-			else if (self.config.model == 'mls-x1') {
-				source = constants.SOURCES_MLSX1.find((x) => x.byte1 === sourceAddressByte1 && x.byte2 === sourceAddressByte2)
-			}
-
-			if (aux && source) {
-				self.DATA[aux.id] = source.id
-			}
-		}
-
-		self.checkFeedbacks();
-		CheckVariables(self);
-	}
+	//	self.checkFeedbacks()
+	//	CheckVariables(self)
 }
 
 export function xptME(self: xvsInstance, effId: string, busId: string, sourceId: string): void {
-	self.log('debug', `xptME: ${effId}, ${busId}, ${sourceId}`)
-	let buffer = Buffer.alloc(5)
+	console.log(`xptME: ${effId}, ${busId}, ${sourceId}`)
+	const buffer = Buffer.alloc(5)
 
 	//look up the effect, bus, and source addresses
-	let eff: any = constants.EFF.find((x) => x.id === effId)
+	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
 	let bus: any
 	let source: any
 
 	if (self.config.model == 'xvs-9000') {
 		bus = constants.BUSSES_XVS9000.find((x) => x.id === busId)
 		source = constants.SOURCES_XVS9000.find((x) => x.id === parseInt(sourceId))
-	}
-	else if (self.config.model == 'xvs-g1') {
+	} else if (self.config.model == 'xvs-g1') {
 		bus = constants.BUSSES_XVSG1.find((x) => x.id === busId)
 		source = constants.SOURCES_XVSG1.find((x) => x.id === parseInt(sourceId))
-	}
-	else if (self.config.model == 'mls-x1') {
+	} else if (self.config.model == 'mls-x1') {
 		bus = constants.BUSSES_MLSX1.find((x) => x.id === busId)
 		source = constants.SOURCES_MLSX1.find((x) => x.id === parseInt(sourceId))
 	}
 
 	if (bus && source) {
-		let effAddress: number = eff.address
-		let busAddress: number = bus.writeByte
-		let sourceAddressByte1: number = source.byte1
-		let sourceAddressByte2: number = source.byte2
+		const effAddress: number = eff.address
+		const busAddress: number = bus.writeByte
+		const sourceAddressByte1: number = source.byte1
+		const sourceAddressByte2: number = source.byte2
 
 		buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
 		buffer.writeUInt8(effAddress, 1) //effect address
@@ -175,53 +174,51 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 
 export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void {
 	self.log('debug', `xptAUX: ${auxId}, ${sourceId}`)
-	let buffer = Buffer.alloc(5)
+	const buffer = Buffer.alloc(5)
 
 	//look up the aux and source addresses
-	let aux: any = constants.EFF_AUX.find((x) => x.id === auxId)
+	const aux: any = constants.AUXXPTEffectAddresses.find((x) => x.id === auxId)
 	let source: any
 
 	if (self.config.model == 'xvs-9000') {
 		source = constants.SOURCES_XVS9000.find((x) => x.id === parseInt(sourceId))
-	}
-	else if (self.config.model == 'xvs-g1') {
+	} else if (self.config.model == 'xvs-g1') {
 		source = constants.SOURCES_XVSG1.find((x) => x.id === parseInt(sourceId))
-	}
-	else if (self.config.model == 'mls-x1') {
+	} else if (self.config.model == 'mls-x1') {
 		source = constants.SOURCES_MLSX1.find((x) => x.id === parseInt(sourceId))
 	}
 
 	if (source) {
-		let auxAddress: number = aux.address
-		let sourceAddressByte1: number = source.byte1
-		let sourceAddressByte2: number = source.byte2
+		const auxAddress: number = aux.address
+		const sourceAddressByte1: number = source.byte1
+		const sourceAddressByte2: number = source.byte2
 
 		buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
 		buffer.writeUInt8(auxAddress, 1) //aux address
-		buffer.writeUInt8(0xC0, 2) //write command
+		buffer.writeUInt8(0xc0, 2) //write command
 		buffer.writeUInt8(sourceAddressByte1, 3) //source address byte 1
 		buffer.writeUInt8(sourceAddressByte2, 4) //source address byte 2
 		sendCommand(self, buffer)
 	}
 }
 
-export function transitionME(self: xvsInstance, effId: string, cmdId: string, transRate: number) {
+export function transitionME(self: xvsInstance, effId: string, cmdId: string, transRate: number): void {
 	self.log('debug', `transitionME: ${effId}, ${cmdId}`)
-	let buffer = Buffer.alloc(7)
+	const buffer = Buffer.alloc(7)
 
 	//look up the effect address
-	let eff: any = constants.EFF.find((x) => x.id === effId)
+	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
 
 	//look up the command
-	let cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
+	const cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
 
 	if (eff && cmd) {
-		let effAddress: number = eff.address
-		let cmdAddress: number = cmd.writeByte
+		const effAddress: number = eff.address
+		const cmdAddress: number = cmd.writeByte
 
 		//take the transRate and split the value into two bytes
-		let transRateByte1: number = (transRate >> 8) & 0xFF
-		let transRateByte2: number = transRate & 0xFF
+		const transRateByte1: number = (transRate >> 8) & 0xff
+		const transRateByte2: number = transRate & 0xff
 
 		buffer.writeUInt8(0x06, 0) //6 bytes is the length of the command
 		buffer.writeUInt8(effAddress, 1) //effect address
@@ -234,19 +231,19 @@ export function transitionME(self: xvsInstance, effId: string, cmdId: string, tr
 	}
 }
 
-export function transitionMECancel(self: xvsInstance, effId: string, cmdId: string) {
+export function transitionMECancel(self: xvsInstance, effId: string, cmdId: string): void {
 	self.log('debug', `transitionMECancel: ${effId}, ${cmdId}`)
-	let buffer = Buffer.alloc(5)
+	const buffer = Buffer.alloc(5)
 
 	//look up the effect address
-	let eff: any = constants.EFF.find((x) => x.id === effId)
+	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
 
 	//look up the command
-	let cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
+	const cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
 
 	if (eff && cmd) {
-		let effAddress: number = eff.address
-		let cmdAddress: number = cmd.writeByte
+		const effAddress: number = eff.address
+		const cmdAddress: number = cmd.writeByte
 
 		buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
 		buffer.writeUInt8(effAddress, 1) //effect address
@@ -257,81 +254,89 @@ export function transitionMECancel(self: xvsInstance, effId: string, cmdId: stri
 	}
 }
 
-export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: string) {
+export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: string): void {
 	self.log('debug', `transitionME: ${effId}, ${cmd}`)
-	let buffer = Buffer.alloc(4)
+	const buffer = Buffer.alloc(4)
 
 	//look up the effect address
-	let eff: any = constants.EFF.find((x) => x.id === effId)
+	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
 
 	//look up the key
-	let key: any = constants.KEYS.find((x) => x.id === keyId)
+	const key: any = constants.KEYS.find((x) => x.id === keyId)
 
 	if (eff && key) {
-		let effAddress: number = eff.address
-		let keyAddress: number = key.address
+		const effAddress: number = eff.address
+		const keyAddress: number = key.address
 
 		buffer.writeUInt8(0x03, 0) //4 bytes is the length of the command
 		buffer.writeUInt8(effAddress, 1) //effect address
 		if (cmd == 'on') {
-			buffer.writeUInt8(0xDA, 2) //command on
-		}
-		else {
-			buffer.writeUInt8(0x9A, 2) //command off
+			buffer.writeUInt8(0xda, 2) //command on
+		} else {
+			buffer.writeUInt8(0x9a, 2) //command off
 		}
 		buffer.writeUInt8(keyAddress, 3) //key number
 		sendCommand(self, buffer)
 	}
 }
 
-export function recallSnapshot(self: xvsInstance, regionSelectPart1: string[], registerNumber: number, regionSelectPart2: Number[], regionselectPart3: string[]) {
-	self.log('debug', `recallSnapshot: ${regionSelectPart1}, ${registerNumber}, ${regionSelectPart2}, ${regionselectPart3}`)
-	let buffer = Buffer.alloc(7)
+export function recallSnapshot(
+	self: xvsInstance,
+	regionSelectPart1: string[],
+	registerNumber: number,
+	regionSelectPart2: number[],
+	regionselectPart3: string[]
+): void {
+	self.log(
+		'debug',
+		`recallSnapshot: ${regionSelectPart1}, ${registerNumber}, ${regionSelectPart2}, ${regionselectPart3}`
+	)
+	const buffer = Buffer.alloc(7)
 
-	let byte3: number = 0x00
-	let byte5: number = 0x00
-	let byte6: number = 0x00
+	let byte3 = 0x00
+	let byte5 = 0x00
+	let byte6 = 0x00
 
 	//create byte 3 - region select 1
-	let regionSelectPart1_bit7 = 0
-	let regionSelectPart1_bit6 = 0
-	let regionSelectPart1_bit5 = regionSelectPart1.includes('me5') ? 1 : 0
-	let regionSelectPart1_bit4 = regionSelectPart1.includes('me4') ? 1 : 0
-	let regionSelectPart1_bit3 = regionSelectPart1.includes('me3') ? 1 : 0
-	let regionSelectPart1_bit2 = regionSelectPart1.includes('me2') ? 1 : 0
-	let regionSelectPart1_bit1 = regionSelectPart1.includes('me1') ? 1 : 0
-	let regionSelectPart1_bit0 = regionSelectPart1.includes('pp') ? 1 : 0
+	const regionSelectPart1_bit7 = 0
+	const regionSelectPart1_bit6 = 0
+	const regionSelectPart1_bit5 = regionSelectPart1.includes('me5') ? 1 : 0
+	const regionSelectPart1_bit4 = regionSelectPart1.includes('me4') ? 1 : 0
+	const regionSelectPart1_bit3 = regionSelectPart1.includes('me3') ? 1 : 0
+	const regionSelectPart1_bit2 = regionSelectPart1.includes('me2') ? 1 : 0
+	const regionSelectPart1_bit1 = regionSelectPart1.includes('me1') ? 1 : 0
+	const regionSelectPart1_bit0 = regionSelectPart1.includes('pp') ? 1 : 0
 
 	//now combine them all into a string
-	let byte3_string = `${regionSelectPart1_bit7}${regionSelectPart1_bit6}${regionSelectPart1_bit5}${regionSelectPart1_bit4}${regionSelectPart1_bit3}${regionSelectPart1_bit2}${regionSelectPart1_bit1}${regionSelectPart1_bit0}`
+	const byte3_string = `${regionSelectPart1_bit7}${regionSelectPart1_bit6}${regionSelectPart1_bit5}${regionSelectPart1_bit4}${regionSelectPart1_bit3}${regionSelectPart1_bit2}${regionSelectPart1_bit1}${regionSelectPart1_bit0}`
 	byte3 = parseInt(byte3_string, 2) //convert to number with radix of 2 (binary)
 
 	//create byte 5 - region select 2
-	let regionSelectPart2_bit7 = regionSelectPart2.includes(8) ? 1 : 0
-	let regionSelectPart2_bit6 = regionSelectPart2.includes(7) ? 1 : 0
-	let regionSelectPart2_bit5 = regionSelectPart2.includes(6) ? 1 : 0
-	let regionSelectPart2_bit4 = regionSelectPart2.includes(5) ? 1 : 0
-	let regionSelectPart2_bit3 = regionSelectPart2.includes(4) ? 1 : 0
-	let regionSelectPart2_bit2 = regionSelectPart2.includes(3) ? 1 : 0
-	let regionSelectPart2_bit1 = regionSelectPart2.includes(2) ? 1 : 0
-	let regionSelectPart2_bit0 = regionSelectPart2.includes(1) ? 1 : 0
+	const regionSelectPart2_bit7 = regionSelectPart2.includes(8) ? 1 : 0
+	const regionSelectPart2_bit6 = regionSelectPart2.includes(7) ? 1 : 0
+	const regionSelectPart2_bit5 = regionSelectPart2.includes(6) ? 1 : 0
+	const regionSelectPart2_bit4 = regionSelectPart2.includes(5) ? 1 : 0
+	const regionSelectPart2_bit3 = regionSelectPart2.includes(4) ? 1 : 0
+	const regionSelectPart2_bit2 = regionSelectPart2.includes(3) ? 1 : 0
+	const regionSelectPart2_bit1 = regionSelectPart2.includes(2) ? 1 : 0
+	const regionSelectPart2_bit0 = regionSelectPart2.includes(1) ? 1 : 0
 
 	//now combine them all into a string
-	let byte5_string = `${regionSelectPart2_bit7}${regionSelectPart2_bit6}${regionSelectPart2_bit5}${regionSelectPart2_bit4}${regionSelectPart2_bit3}${regionSelectPart2_bit2}${regionSelectPart2_bit1}${regionSelectPart2_bit0}`
+	const byte5_string = `${regionSelectPart2_bit7}${regionSelectPart2_bit6}${regionSelectPart2_bit5}${regionSelectPart2_bit4}${regionSelectPart2_bit3}${regionSelectPart2_bit2}${regionSelectPart2_bit1}${regionSelectPart2_bit0}`
 	byte5 = parseInt(byte5_string, 2) //convert to number with radix of 2 (binary)
 
 	//create byte 6 - region select 3
-	let regionSelectPart3_bit7 = 0
-	let regionSelectPart3_bit6 = 0
-	let regionSelectPart3_bit5 = regionselectPart3.includes('me5') ? 1 : 0
-	let regionSelectPart3_bit4 = regionselectPart3.includes('me4') ? 1 : 0
-	let regionSelectPart3_bit3 = regionselectPart3.includes('me3') ? 1 : 0
-	let regionSelectPart3_bit2 = regionselectPart3.includes('me2') ? 1 : 0
-	let regionSelectPart3_bit1 = regionselectPart3.includes('me1') ? 1 : 0
-	let regionSelectPart3_bit0 = regionselectPart3.includes('pp') ? 1 : 0
+	const regionSelectPart3_bit7 = 0
+	const regionSelectPart3_bit6 = 0
+	const regionSelectPart3_bit5 = regionselectPart3.includes('me5') ? 1 : 0
+	const regionSelectPart3_bit4 = regionselectPart3.includes('me4') ? 1 : 0
+	const regionSelectPart3_bit3 = regionselectPart3.includes('me3') ? 1 : 0
+	const regionSelectPart3_bit2 = regionselectPart3.includes('me2') ? 1 : 0
+	const regionSelectPart3_bit1 = regionselectPart3.includes('me1') ? 1 : 0
+	const regionSelectPart3_bit0 = regionselectPart3.includes('pp') ? 1 : 0
 
 	//now combine them all into a string
-	let byte6_string = `${regionSelectPart3_bit7}${regionSelectPart3_bit6}${regionSelectPart3_bit5}${regionSelectPart3_bit4}${regionSelectPart3_bit3}${regionSelectPart3_bit2}${regionSelectPart3_bit1}${regionSelectPart3_bit0}`
+	const byte6_string = `${regionSelectPart3_bit7}${regionSelectPart3_bit6}${regionSelectPart3_bit5}${regionSelectPart3_bit4}${regionSelectPart3_bit3}${regionSelectPart3_bit2}${regionSelectPart3_bit1}${regionSelectPart3_bit0}`
 	byte6 = parseInt(byte6_string, 2) //convert to number with radix of 2 (binary)
 
 	buffer.writeUInt8(0x06, 0) //6 bytes is the length of the command
@@ -344,17 +349,17 @@ export function recallSnapshot(self: xvsInstance, regionSelectPart1: string[], r
 	sendCommand(self, buffer)
 }
 
-export function macroRecall(self: xvsInstance, macroNumber: string) {
+export function macroRecall(self: xvsInstance, macroNumber: string): void {
 	self.log('debug', `macroRecall: ${macroNumber}`)
-	let buffer = Buffer.alloc(7)
+	const buffer = Buffer.alloc(7)
 
-	let macroNumberByte1: number = 0
-	let macroNumberByte2: number = 0
+	let macroNumberByte1 = 0
+	let macroNumberByte2 = 0
 
 	//take the macroNumber, convert it to an integer, and then split the value into two bytes
-	let macroNumberInt: number = parseInt(macroNumber)
-	macroNumberByte1 = (macroNumberInt >> 8) & 0xFF
-	macroNumberByte2 = macroNumberInt & 0xFF
+	const macroNumberInt: number = parseInt(macroNumber)
+	macroNumberByte1 = (macroNumberInt >> 8) & 0xff
+	macroNumberByte2 = macroNumberInt & 0xff
 
 	buffer.writeUInt8(0x03, 0) //6 bytes is the length of the command
 	buffer.writeUInt8(0x22, 1) //command
@@ -366,30 +371,45 @@ export function macroRecall(self: xvsInstance, macroNumber: string) {
 	sendCommand(self, buffer)
 }
 
-export function macroTake(self: xvsInstance) {
+export function macroTake(self: xvsInstance): void {
 	self.log('debug', `macroTake`)
-	let buffer = Buffer.alloc(5)
+	const buffer = Buffer.alloc(5)
 
 	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
 	buffer.writeUInt8(0x22, 1) //command
 	buffer.writeUInt8(0x90, 2) //command
 	buffer.writeUInt8(0x00, 3) //command
-	buffer.writeUInt8(0x1C, 4) //command
+	buffer.writeUInt8(0x1c, 4) //command
 	sendCommand(self, buffer)
 }
 
-function sendCommand(self: xvsInstance, buffer: Buffer, log: boolean = true): void {
+function sendCommand(self: xvsInstance, buffer: Buffer, log = true): void {
 	if (self.tcp !== undefined && self.tcp.isConnected == true) {
 		if (self.config.verbose == true) {
-			if (log) { //even with verbose mode on, we don't want to log the readStates commands because they come so fast
+			if (log) {
+				//even with verbose mode on, we don't want to log the readStates commands because they come so fast
 				//break the hex string into 2 character chunks
-				let hexString = buffer.toString('hex')
-				let hexArray = hexString.match(/.{1,2}/g)
+				const hexString = buffer.toString('hex')
+				const hexArray = hexString.match(/.{1,2}/g)
 				//now join them back together with a space, but only if it is not null
-				let hexStringSpaced = hexArray ? hexArray.join(' ') : ''
+				const hexStringSpaced = hexArray ? hexArray.join(' ') : ''
 				self.log('debug', `Sending: ${hexStringSpaced}`)
 			}
 		}
-		self.tcp.send(buffer)
+
+		self.outgoingCommandQueue.push(Buffer.from(buffer))
+		if (!self.outputTimer) {
+			self.outputTimer = setInterval(() => {
+				if (self.outgoingCommandQueue.length > 0) {
+					const command = self.outgoingCommandQueue.shift()
+					if (command) {
+						self.tcp.send(command)
+					}
+				} else {
+					clearInterval(self.outputTimer)
+					self.outputTimer = undefined
+				}
+			}, 10)
+		}
 	}
 }

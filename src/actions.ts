@@ -1,19 +1,26 @@
 import type { xvsInstance } from './main.js'
 import { CompanionActionDefinitions, CompanionInputFieldCheckbox } from '@companion-module/base'
 import * as constants from './constants.js'
-import { xptME, xptAUX, transitionME, transitionMECancel, keyOnOff, recallSnapshot, macroRecall, macroTake } from './api.js'
-
-
+import {
+	xptME,
+	xptAUX,
+	transitionME,
+	transitionMECancel,
+	keyOnOff,
+	recallSnapshot,
+	macroRecall,
+	macroTake,
+} from './api.js'
 
 export function UpdateActions(self: xvsInstance): void {
-	let actions: CompanionActionDefinitions = {}
+	const actions: CompanionActionDefinitions = {}
 
 	let BUSSES: any[] = []
 	let SOURCES: any[] = []
 
 	let AUXES: any[] = []
 
-	switch(self.config.model) {
+	switch (self.config.model) {
 		case 'xvs-9000':
 			BUSSES = constants.BUSSES_XVS9000
 			SOURCES = constants.SOURCES_XVS9000
@@ -28,7 +35,7 @@ export function UpdateActions(self: xvsInstance): void {
 			break
 	}
 
-	AUXES = constants.EFF_AUX
+	AUXES = constants.AUXXPTEffectAddresses
 
 	actions.xptME = {
 		name: 'XPT: M/E',
@@ -37,8 +44,8 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.EFF[0].id,
-				choices: constants.EFF,
+				default: constants.MEXPTEffectAddresses[0].id,
+				choices: constants.MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
@@ -53,12 +60,12 @@ export function UpdateActions(self: xvsInstance): void {
 				label: 'Source Selection',
 				default: SOURCES[0].id,
 				choices: SOURCES,
-			}
+			},
 		],
 		callback: async (event) => {
-			let eff: any = event.options.eff
-			let bus: any = event.options.bus
-			let source: any = event.options.source
+			const eff: any = event.options.eff
+			const bus: any = event.options.bus
+			const source: any = event.options.source
 			xptME(self, eff, bus, source)
 		},
 	}
@@ -79,11 +86,11 @@ export function UpdateActions(self: xvsInstance): void {
 				label: 'Source Selection',
 				default: SOURCES[0].id,
 				choices: SOURCES,
-			}
+			},
 		],
 		callback: async (event) => {
-			let aux: any = event.options.aux
-			let source: any = event.options.source
+			const aux: any = event.options.aux
+			const source: any = event.options.source
 			xptAUX(self, aux, source)
 		},
 	}
@@ -95,8 +102,8 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.EFF[0].id,
-				choices: constants.EFF,
+				default: constants.MEXPTEffectAddresses[0].id,
+				choices: constants.MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
@@ -112,14 +119,14 @@ export function UpdateActions(self: xvsInstance): void {
 				default: 30,
 				min: 0,
 				max: 999,
-			}
+			},
 		],
 		callback: async (event) => {
-			let eff: any = event.options.eff
-			let cmd: any = event.options.cmd
-			let transRate: any = event.options.transRate
+			const eff: any = event.options.eff
+			const cmd: any = event.options.cmd
+			const transRate: any = event.options.transRate
 			transitionME(self, eff, cmd, transRate)
-		}
+		},
 	}
 
 	actions.transitionMECancel = {
@@ -129,8 +136,8 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.EFF[0].id,
-				choices: constants.EFF,
+				default: constants.MEXPTEffectAddresses[0].id,
+				choices: constants.MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
@@ -138,13 +145,13 @@ export function UpdateActions(self: xvsInstance): void {
 				label: 'Command',
 				default: constants.AUTOTRANSITION_EFF[0].id,
 				choices: constants.AUTOTRANSITION_EFF,
-			}
+			},
 		],
 		callback: async (event) => {
-			let eff: any = event.options.eff
-			let cmd: any = event.options.cmd
+			const eff: any = event.options.eff
+			const cmd: any = event.options.cmd
 			transitionMECancel(self, eff, cmd)
-		}
+		},
 	}
 
 	actions.keyOnOff = {
@@ -154,8 +161,8 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.EFF[0].id,
-				choices: constants.EFF,
+				default: constants.MEXPTEffectAddresses[0].id,
+				choices: constants.MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
@@ -171,30 +178,30 @@ export function UpdateActions(self: xvsInstance): void {
 				default: 'on',
 				choices: [
 					{ id: 'on', label: 'On' },
-					{ id: 'off', label: 'Off' }
-				]
-			}
+					{ id: 'off', label: 'Off' },
+				],
+			},
 		],
 		callback: async (event) => {
-			let eff: any = event.options.eff
-			let cmd: any = event.options.cmd
-			let key: any = event.options.key
+			const eff: any = event.options.eff
+			const cmd: any = event.options.cmd
+			const key: any = event.options.key
 			keyOnOff(self, eff, key, cmd)
-		}
+		},
 	}
 
-	let reversedEFF = constants.EFF.slice().reverse();
+	const reversedEFF = constants.MEXPTEffectAddresses.slice().reverse()
 
 	actions.recallSnapshot = {
 		name: 'Recall Snapshot',
 		options: [],
 		callback: async (event) => {
-			let regionSelectPart1: string[] = []
-			let registerNumber: any = event.options.registerNumber
-			let regionSelectPart2: number[] = []
-			let regionSelectPart3: string[] = []
+			const regionSelectPart1: string[] = []
+			const registerNumber: any = event.options.registerNumber
+			const regionSelectPart2: number[] = []
+			const regionSelectPart3: string[] = []
 
-			for (let eff of reversedEFF) {
+			for (const eff of reversedEFF) {
 				if (event.options[`regionSelect_part1_${eff.id}`]) {
 					regionSelectPart1.push(eff.id)
 				}
@@ -206,25 +213,25 @@ export function UpdateActions(self: xvsInstance): void {
 				}
 			}
 
-			for (let eff of reversedEFF) {
+			for (const eff of reversedEFF) {
 				if (event.options[`regionSelect_part3_${eff.id}`]) {
 					regionSelectPart3.push(eff.id)
 				}
 			}
 
 			recallSnapshot(self, regionSelectPart1, registerNumber, regionSelectPart2, regionSelectPart3)
-		}
+		},
 	}
 
-	for (let eff of reversedEFF) {
+	for (const eff of reversedEFF) {
 		//build an array of checkboxes for each EFF to push into the options for Region Select Part 1
-		let regionOption: CompanionInputFieldCheckbox = {
+		const regionOption: CompanionInputFieldCheckbox = {
 			type: 'checkbox',
 			id: `regionSelect_part1_${eff.id}`,
 			label: `Region Select Part 1 - ${eff.label}`,
-			default: false
-		};
-		actions.recallSnapshot.options.push(regionOption);
+			default: false,
+		}
+		actions.recallSnapshot.options.push(regionOption)
 	}
 
 	//now add register number
@@ -234,29 +241,29 @@ export function UpdateActions(self: xvsInstance): void {
 		label: 'Register Number',
 		default: 1,
 		min: 1,
-		max: 99
-	});
+		max: 99,
+	})
 
 	//now add region select part 2, user 8-user 1
 	for (let i = 8; i > 0; i--) {
-		let regionOption: CompanionInputFieldCheckbox = {
+		const regionOption: CompanionInputFieldCheckbox = {
 			type: 'checkbox',
 			id: `regionSelect_part2_${i}`,
 			label: `Region Select Part 2 - User ${i}`,
-			default: false
-		};
-		actions.recallSnapshot.options.push(regionOption);
+			default: false,
+		}
+		actions.recallSnapshot.options.push(regionOption)
 	}
 
 	//now add region select part 3, reversed EFF again with 'SUB' added at the end of each name
-	for (let eff of reversedEFF) {
-		let regionOption: CompanionInputFieldCheckbox = {
+	for (const eff of reversedEFF) {
+		const regionOption: CompanionInputFieldCheckbox = {
 			type: 'checkbox',
 			id: `regionSelect_part3_${eff.id}`,
 			label: `Region Select Part 3 - ${eff.label} SUB`,
-			default: false
-		};
-		actions.recallSnapshot.options.push(regionOption);
+			default: false,
+		}
+		actions.recallSnapshot.options.push(regionOption)
 	}
 
 	actions.macroRecall = {
@@ -268,13 +275,13 @@ export function UpdateActions(self: xvsInstance): void {
 				label: 'Macro Register Number',
 				default: 1,
 				min: 1,
-				max: 999
-			}
+				max: 999,
+			},
 		],
 		callback: async (event) => {
-			let macroNumber: any = event.options.macroNumber
+			const macroNumber: any = event.options.macroNumber
 			macroRecall(self, macroNumber)
-		}
+		},
 	}
 
 	actions.macroTake = {
@@ -282,8 +289,8 @@ export function UpdateActions(self: xvsInstance): void {
 		options: [],
 		callback: async () => {
 			macroTake(self)
-		}
+		},
 	}
 
-	self.setActionDefinitions(actions);
+	self.setActionDefinitions(actions)
 }

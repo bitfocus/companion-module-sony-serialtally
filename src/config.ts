@@ -1,11 +1,12 @@
 import { Regex, type SomeCompanionConfigField } from '@companion-module/base'
+import { Models } from './constants.js'
 
 export interface ModuleConfig {
 	host: string
 	port: number
-	model: string,
-	advanced: boolean,
-	pollInterval: number,
+	model: Models
+	advanced: boolean
+	pollInterval: number
 	verbose: boolean
 }
 
@@ -42,8 +43,8 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			default: 'xvs-9000',
 			choices: [
 				{ id: 'xvs-9000', label: 'XVS 9000/8000/7000/6000' },
-				{ id: 'xvsg1', label: 'XVS-G1' },
-				{ id: 'mlsx1', label: 'MLS-X1' }
+				{ id: 'xvs-g1', label: 'XVS-G1' },
+				{ id: 'mls-x1', label: 'MLS-X1' },
 			],
 		},
 		{
@@ -51,14 +52,14 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			id: 'advancedSeperator',
 			label: '',
 			width: 12,
-			value: '<hr />'
+			value: '<hr />',
 		},
 		{
 			type: 'checkbox',
 			id: 'advanced',
 			label: 'Advanced settings',
 			width: 12,
-			default: false
+			default: false,
 		},
 		{
 			type: 'number',
@@ -68,7 +69,7 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			min: 100,
 			max: 60000,
 			default: 500,
-			isVisible: (options) => !!options['advanced']
+			isVisible: (options) => !!options['advanced'],
 		},
 		{
 			type: 'static-text',
@@ -76,7 +77,7 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			label: '',
 			width: 8,
 			value: 'This is the interval at which the module will poll the switcher for status updates.',
-			isVisible: (options) => !!options['advanced']
+			isVisible: (options) => !!options['advanced'],
 		},
 		{
 			type: 'checkbox',
@@ -84,7 +85,7 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			label: 'Verbose logging',
 			width: 4,
 			default: false,
-			isVisible: (options) => !!options['advanced']
+			isVisible: (options) => !!options['advanced'],
 		},
 		{
 			type: 'static-text',
@@ -92,7 +93,7 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			label: '',
 			width: 8,
 			value: 'Enable this to log all commands and responses to the debug log.',
-			isVisible: (options) => !!options['advanced']
-		}
+			isVisible: (options) => !!options['advanced'],
+		},
 	]
 }

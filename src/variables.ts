@@ -1,16 +1,15 @@
 import type { xvsInstance } from './main.js'
 import * as constants from './constants.js'
+import { CompanionVariableValues } from '@companion-module/base'
 
 export function UpdateVariableDefinitions(self: xvsInstance): void {
-	let variables = []
+	const variables = []
 
-	let EFF: any[] = constants.EFF
+	const EFF: constants.EffectAddress[] = constants.MEXPTEffectAddresses
+	let BUSSES: constants.Bus[] = []
+	let AUXES: constants.EffectAddress[] = []
 
-	let BUSSES: any[] = []
-
-	let AUXES: any[] = []
-
-	switch(self.config.model) {
+	switch (self.config.model) {
 		case 'xvs-9000':
 			BUSSES = constants.BUSSES_XVS9000
 			break
@@ -22,10 +21,10 @@ export function UpdateVariableDefinitions(self: xvsInstance): void {
 			break
 	}
 
-	AUXES = constants.EFF_AUX
+	AUXES = constants.AUXXPTEffectAddresses
 
-	for (let eff of EFF) {
-		for (let bus of BUSSES) {
+	for (const eff of EFF) {
+		for (const bus of BUSSES) {
 			variables.push({
 				name: `${eff.label} ${bus.label}`,
 				variableId: `${eff.id}_${bus.id}`,
@@ -33,7 +32,7 @@ export function UpdateVariableDefinitions(self: xvsInstance): void {
 		}
 	}
 
-	for (let aux of AUXES) {
+	for (const aux of AUXES) {
 		variables.push({
 			name: `${aux.label}`,
 			variableId: `${aux.id}`,
@@ -46,16 +45,15 @@ export function UpdateVariableDefinitions(self: xvsInstance): void {
 export function CheckVariables(self: xvsInstance): void {
 	// Check variables
 
-	let variableObj: any = {}
-
-	let EFF: any[] = constants.EFF
+	const variableObj: CompanionVariableValues = {}
+	const EFF = constants.MEXPTEffectAddresses
 
 	let BUSSES: any[] = []
 	let SOURCES: any[] = []
 
 	let AUXES: any[] = []
 
-	switch(self.config.model) {
+	switch (self.config.model) {
 		case 'xvs-9000':
 			BUSSES = constants.BUSSES_XVS9000
 			SOURCES = constants.SOURCES_XVS9000
@@ -70,19 +68,27 @@ export function CheckVariables(self: xvsInstance): void {
 			break
 	}
 
-	AUXES = constants.EFF_AUX
+	AUXES = constants.AUXXPTEffectAddresses
 
-	for (let eff of EFF) {
-		for (let bus of BUSSES) {
-			let sourceAddress = self.DATA[eff.id][bus.id]
-			let sourceName = SOURCES.find((source) => source.id === sourceAddress).label
-			variableObj[`${eff.id}_${bus.id}`] = sourceName
+	for (const eff of EFF) {
+		for (const bus of BUSSES) {
+			const sourceAddress = self.DATA[eff.id]?.[bus.id]
+			const sourceName = SOURCES.find((source) => source.id === sourceAddress)?.label
+			if (sourceAddress && sourceName) {
+				variableObj[`${eff.id}_${bus.id}`] = sourceName
+			} else {
+				self.log('debug', `CheckVariables: No source found for ${eff.id}_${bus.id}`)
+			}
 		}
 	}
 
-	for (let aux of AUXES) {
-		let sourceAddress = self.DATA[aux.id]
-		let sourceName = SOURCES.find((source) => source.id === sourceAddress).label
-		variableObj[`${aux.id}`] = sourceName
+	for (const aux of AUXES) {
+		const sourceAddress = self.DATA[aux.id]
+		const sourceName = SOURCES.find((source) => source.id === sourceAddress)?.label
+		if (sourceAddress && sourceName) {
+			variableObj[`${aux.id}`] = sourceName
+		} else {
+			self.log('debug', `CheckVariables: No source found for ${aux.id}`)
+		}
 	}
 }

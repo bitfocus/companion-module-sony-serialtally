@@ -3,14 +3,14 @@ import type { xvsInstance } from './main.js'
 import * as constants from './constants.js'
 
 export function UpdateFeedbacks(self: xvsInstance): void {
-	let feedbacks: CompanionFeedbackDefinitions = {}
+	const feedbacks: CompanionFeedbackDefinitions = {}
 
 	let BUSSES: any[] = []
 	let SOURCES: any[] = []
 
 	let AUXES: any[] = []
 
-	switch(self.config.model) {
+	switch (self.config.model) {
 		case 'xvs-9000':
 			BUSSES = constants.BUSSES_XVS9000
 			SOURCES = constants.SOURCES_XVS9000
@@ -25,7 +25,7 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 			break
 	}
 
-	AUXES = constants.EFF_AUX
+	AUXES = constants.AUXXPTEffectAddresses
 
 	feedbacks.xptMEState = {
 		name: 'Selected Source is on Selected Bus of M/E',
@@ -39,8 +39,8 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.EFF[0].id,
-				choices: constants.EFF,
+				default: constants.MEXPTEffectAddresses[0].id,
+				choices: constants.MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
@@ -55,13 +55,13 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 				label: 'Source Selection',
 				default: SOURCES[0].id,
 				choices: SOURCES,
-			}
+			},
 		],
 		callback: (feedback) => {
-			let eff: any = feedback.options.eff
-			let bus: any = feedback.options.bus
-			let source: any = feedback.options.source
-			
+			const eff: any = feedback.options.eff
+			const bus: any = feedback.options.bus
+			const source: any = feedback.options.source
+
 			if (self.DATA[eff][bus] == source) {
 				return true
 			}
@@ -91,12 +91,12 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 				label: 'Source Selection',
 				default: SOURCES[0].id,
 				choices: SOURCES,
-			}
+			},
 		],
 		callback: (feedback) => {
-			let aux: any = feedback.options.aux
-			let source: any = feedback.options.source
-			
+			const aux: any = feedback.options.aux
+			const source: any = feedback.options.source
+
 			if (self.DATA[aux] == source) {
 				return true
 			}

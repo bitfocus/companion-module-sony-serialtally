@@ -16,10 +16,17 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 	public tcp: any
 	public DATA: any = {}
 	public INTERVAL: any = undefined
+	public PROTOCOL_STATE: 'IDLE' | 'WAITING' | 'OK' = 'IDLE'
+
+	public incomingData = Buffer.alloc(0)
+	public incomingCommandQueue: Array<Buffer> = []
+	public outgoingCommandQueue: Array<Buffer> = []
+	public outputTimer: NodeJS.Timeout | undefined = undefined
 
 	async init(config: ModuleConfig): Promise<void> {
-		this.configUpdated(config)
+		await this.configUpdated(config)
 	}
+
 	// When module gets deleted
 	async destroy(): Promise<void> {
 		this.log('debug', 'destroy')
