@@ -31,7 +31,7 @@ export function INCOMING_AUX_XPT(self: xvsInstance, buffer: Buffer): boolean {
 	}
 
 	// TODO: Handle feedbacks for AUX XPT
-	console.log('INCOMING: AUXXPT:', foundAux, foundSource)
+	//console.log('INCOMING: AUXXPT:', foundAux, foundSource)
 
 	//look in the self.DATA.xpt to see if the aux  is already there, if it is, update it, if not, add it.
 	//if the source is already there, update it, if not, add it.
@@ -41,6 +41,17 @@ export function INCOMING_AUX_XPT(self: xvsInstance, buffer: Buffer): boolean {
 	}
 
 	self.DATA.xpt[foundAux.id] = foundSource.id
+
+	if (self.xptInterval) {
+		clearInterval(self.xptInterval)
+	}
+
+	//update variables and feedbacks
+	self.xptInterval = setTimeout(() => {
+		self.updateVariableValues()
+		self.checkFeedbacks()
+		clearInterval(self.xptInterval)
+	}, 500)
 
 	return true
 }

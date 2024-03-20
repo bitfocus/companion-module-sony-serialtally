@@ -1,6 +1,6 @@
 import { InstanceBase, runEntrypoint, InstanceStatus, SomeCompanionConfigField } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
-import { UpdateVariableDefinitions } from './variables.js'
+import { UpdateVariableDefinitions, UpdateVariableValues } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
@@ -19,6 +19,7 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 		xpt: [],
 	}
 
+	public xptInterval: NodeJS.Timeout | undefined = undefined
 	public sourceNameInterval: NodeJS.Timeout | undefined = undefined
 
 	public INTERVAL: any = undefined
@@ -65,6 +66,10 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 
 	updateVariableDefinitions(): void {
 		UpdateVariableDefinitions(this)
+	}
+
+	updateVariableValues(): void {
+		UpdateVariableValues(this)
 	}
 }
 

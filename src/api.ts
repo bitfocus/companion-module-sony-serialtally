@@ -1,6 +1,17 @@
 import { InstanceStatus, TCPHelper } from '@companion-module/base'
 import type { xvsInstance } from './main.js'
-import * as constants from './constants.js'
+import {
+	EffectAddress,
+	MEXPTEffectAddresses,
+	Bus,
+	BUSSES,
+	AUXXPTEffectAddresses,
+	FMXPTEffectAddresses,
+	Source,
+	SOURCES,
+	AUTOTRANSITION_EFF,
+	KEYS,
+} from './constants.js'
 
 //import { CheckVariables } from './variables.js'
 import { INCOMING_HANDLE } from './validators/index.js'
@@ -79,62 +90,52 @@ export function initConnection(self: xvsInstance): void {
 export function readStates(self: xvsInstance): void {
 	//loop through each effect and bus to retrieve the state
 	//look up the effect, bus, and source addresses
-	/*
 
-	const effs = constants.MEXPTEffectAddresses
-	const auxes = constants.AUXXPTEffectAddresses
-
-	let busses: constants.Bus[] = []
-
-	if (self.config.model == 'xvs-9000') {
-		busses = constants.BUSSES_XVS9000
-	} else if (self.config.model == 'xvs-g1') {
-		busses = constants.BUSSES_XVSG1
-	} else if (self.config.model == 'mls-x1') {
-		busses = constants.BUSSES_MLSX1
-	} else {
-		self.log('error', `No busses for model ${self.config.model} was found`)
-		return
-	}
-
-  //read m/e states
-	let buffer = Buffer.alloc(3)
-	for (const eff of effs) {
-		for (const bus of busses) {
-			buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
-			buffer.writeUInt8(eff.address, 1) //effect address
-			buffer.writeUInt8(bus.readByte, 2) //bus address
-			sendCommand(self, buffer, false)
+	//read m/e states
+	const bufferME = Buffer.alloc(3)
+	for (const eff of MEXPTEffectAddresses) {
+		for (const bus of BUSSES[self.config.model]) {
+			bufferME.writeUInt8(0x02, 0) //2 bytes is the length of the command
+			bufferME.writeUInt8(eff.address, 1) //effect address
+			bufferME.writeUInt8(bus.readByte, 2) //bus address
+			sendCommand(self, bufferME, false)
 		}
 	}
 
 	//read aux states
-	for (const aux of auxes) {
-		buffer.writeUInt8(0x02, 0) //2 bytes is the length of the command
-		buffer.writeUInt8(aux.address, 1) //aux address
-		buffer.writeUInt8(0x40, 2) //read command
-		sendCommand(self, buffer, false)
+	const bufferAUX = Buffer.alloc(3)
+	for (const aux of AUXXPTEffectAddresses) {
+		bufferAUX.writeUInt8(0x02, 0) //2 bytes is the length of the command
+		bufferAUX.writeUInt8(aux.address, 1) //aux address
+		bufferAUX.writeUInt8(0x40, 2) //read command
+		sendCommand(self, bufferAUX, false)
 	}
-*/
-	//read source name setup
-	const buffer = Buffer.alloc(6)
 
-	for (const source of constants.SOURCES[self.config.model]) {
-		buffer.writeUInt8(0x05, 0) //2 bytes is the length of the command
-		buffer.writeUInt8(0x20, 1)
-		buffer.writeUInt8(0x70, 2)
-		buffer.writeUInt8(0x50, 3)
-		buffer.writeUInt8(source.byte1, 4)
-		buffer.writeUInt8(source.byte2, 5)
-		sendCommand(self, buffer, false)
+	//read fm states
+	const bufferFM = Buffer.alloc(3)
+	for (const fm of FMXPTEffectAddresses) {
+		bufferFM.writeUInt8(0x02, 0) //2 bytes is the length of the command
+		bufferFM.writeUInt8(fm.address, 1) //effect address
+		bufferFM.writeUInt8(0x40, 2) //read command
+		sendCommand(self, bufferFM, false)
+	}
+
+	//read source name setup
+	const bufferSource = Buffer.alloc(6)
+
+	for (const source of SOURCES[self.config.model]) {
+		bufferSource.writeUInt8(0x05, 0) //2 bytes is the length of the command
+		bufferSource.writeUInt8(0x20, 1)
+		bufferSource.writeUInt8(0x70, 2)
+		bufferSource.writeUInt8(0x50, 3)
+		bufferSource.writeUInt8(source.byte1, 4)
+		bufferSource.writeUInt8(source.byte2, 5)
+		sendCommand(self, bufferSource, false)
 	}
 }
 
 function processData(self: xvsInstance, data: Buffer): void {
 	INCOMING_HANDLE(self, data)
-
-	//	self.checkFeedbacks()
-	//	CheckVariables(self)
 }
 
 export function xptME(self: xvsInstance, effId: string, busId: string, sourceId: string): void {
@@ -142,22 +143,11 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 	const buffer = Buffer.alloc(5)
 
 	//look up the effect, bus, and source addresses
-	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
-	let bus: any
-	let source: any
+	const eff: EffectAddress | undefined = MEXPTEffectAddresses.find((x) => x.id === effId)
+	const bus: Bus | undefined = BUSSES[self.config.model].find((x) => x.id === busId)
+	const source: Source | undefined = SOURCES[self.config.model].find((x) => x.id === parseInt(sourceId))
 
-	if (self.config.model == 'xvs-9000') {
-		bus = constants.BUSSES_XVS9000.find((x) => x.id === busId)
-		source = constants.SOURCES_XVS9000.find((x) => x.id === parseInt(sourceId))
-	} else if (self.config.model == 'xvs-g1') {
-		bus = constants.BUSSES_XVSG1.find((x) => x.id === busId)
-		source = constants.SOURCES_XVSG1.find((x) => x.id === parseInt(sourceId))
-	} else if (self.config.model == 'mls-x1') {
-		bus = constants.BUSSES_MLSX1.find((x) => x.id === busId)
-		source = constants.SOURCES_MLSX1.find((x) => x.id === parseInt(sourceId))
-	}
-
-	if (bus && source) {
+	if (eff && bus && source) {
 		const effAddress: number = eff.address
 		const busAddress: number = bus.writeByte
 		const sourceAddressByte1: number = source.byte1
@@ -177,18 +167,10 @@ export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void
 	const buffer = Buffer.alloc(5)
 
 	//look up the aux and source addresses
-	const aux: any = constants.AUXXPTEffectAddresses.find((x) => x.id === auxId)
-	let source: any
+	const aux: EffectAddress | undefined = AUXXPTEffectAddresses.find((x) => x.id === auxId)
+	const source: Source | undefined = SOURCES[self.config.model].find((x) => x.id === parseInt(sourceId))
 
-	if (self.config.model == 'xvs-9000') {
-		source = constants.SOURCES_XVS9000.find((x) => x.id === parseInt(sourceId))
-	} else if (self.config.model == 'xvs-g1') {
-		source = constants.SOURCES_XVSG1.find((x) => x.id === parseInt(sourceId))
-	} else if (self.config.model == 'mls-x1') {
-		source = constants.SOURCES_MLSX1.find((x) => x.id === parseInt(sourceId))
-	}
-
-	if (source) {
+	if (aux && source) {
 		const auxAddress: number = aux.address
 		const sourceAddressByte1: number = source.byte1
 		const sourceAddressByte2: number = source.byte2
@@ -207,10 +189,10 @@ export function transitionME(self: xvsInstance, effId: string, cmdId: string, tr
 	const buffer = Buffer.alloc(7)
 
 	//look up the effect address
-	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
+	const eff: any = MEXPTEffectAddresses.find((x) => x.id === effId)
 
 	//look up the command
-	const cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
+	const cmd: any = AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
 
 	if (eff && cmd) {
 		const effAddress: number = eff.address
@@ -236,10 +218,10 @@ export function transitionMECancel(self: xvsInstance, effId: string, cmdId: stri
 	const buffer = Buffer.alloc(5)
 
 	//look up the effect address
-	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
+	const eff: any = MEXPTEffectAddresses.find((x) => x.id === effId)
 
 	//look up the command
-	const cmd: any = constants.AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
+	const cmd: any = AUTOTRANSITION_EFF.find((x) => x.id === cmdId)
 
 	if (eff && cmd) {
 		const effAddress: number = eff.address
@@ -259,10 +241,10 @@ export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: s
 	const buffer = Buffer.alloc(4)
 
 	//look up the effect address
-	const eff: any = constants.MEXPTEffectAddresses.find((x) => x.id === effId)
+	const eff: any = MEXPTEffectAddresses.find((x) => x.id === effId)
 
 	//look up the key
-	const key: any = constants.KEYS.find((x) => x.id === keyId)
+	const key: any = KEYS.find((x) => x.id === keyId)
 
 	if (eff && key) {
 		const effAddress: number = eff.address

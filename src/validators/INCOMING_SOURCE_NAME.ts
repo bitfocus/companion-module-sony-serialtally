@@ -41,7 +41,7 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 		//return false
 	} else {
 		// TODO: Handle feedbacks/variables for SOURCE NAME
-		console.log('INCOMING: SOURCE NAME:', found, name)
+		//console.log('INCOMING: SOURCE NAME:', found, name)
 
 		//search the self.sourceNames array for the source name based on the found id, if it's not there, add it.
 		const foundSource = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === found?.id)
@@ -58,6 +58,7 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 
 		self.sourceNameInterval = setInterval(() => {
 			self.updateActions()
+			self.updateFeedbacks()
 			clearInterval(self.sourceNameInterval)
 		}, 1000)
 	}
