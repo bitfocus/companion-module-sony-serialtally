@@ -28,12 +28,20 @@ export function initConnection(self: xvsInstance): void {
 		self.tcp.on('connect', () => {
 			// clear buffer
 			self.incomingData = Buffer.alloc(0)
+			self.incomingCommandQueue = []
+			self.outgoingCommandQueue = []
+
+			// Reset data
+			self.DATA = {
+				sourceNames: [],
+				xpt: [],
+			}
 
 			// tell the module we are connected, and waiting for ack
 			self.PROTOCOL_STATE = 'WAITING'
 
 			self.log('debug', 'Connected, waiting for ACK')
-			self.updateStatus(InstanceStatus.UnknownWarning) // Set status to OK
+			self.updateStatus(InstanceStatus.Connecting, 'Waiting for ack') // Set status to OK
 		})
 
 		self.tcp.on('data', (data: any) => {
@@ -83,6 +91,7 @@ export function initConnection(self: xvsInstance): void {
 		self.tcp.on('error', (err: any) => {
 			self.log('error', `Error: ${err}`)
 			self.PROTOCOL_STATE = 'IDLE'
+			self.updateStatus(InstanceStatus.UnknownError, 'Connection error')
 		})
 	}
 }
