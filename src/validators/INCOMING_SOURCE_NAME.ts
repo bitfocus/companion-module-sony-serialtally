@@ -4,7 +4,7 @@ import { SOURCES } from '../constants.js'
 export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean {
 	const len = buffer.readUint8(0)
 
-	if (len < 5) {
+	if (len < 6) {
 		return false
 	}
 
