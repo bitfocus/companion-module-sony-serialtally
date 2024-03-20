@@ -49,7 +49,7 @@ export function initConnection(self: xvsInstance): void {
 
 			// check if we have a complete command
 			if (self.incomingData.readUInt8(0) === 0x84) {
-				console.log('removing 84 from buffer (ACK)')
+				console.log('got ACK')
 				// this is an ACK, we can ignore it
 				self.incomingData = self.incomingData.subarray(1)
 				self.updateStatus(InstanceStatus.Ok)

@@ -20,7 +20,7 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	public xptInterval: NodeJS.Timeout | undefined = undefined
-	public sourceNameInterval: NodeJS.Timeout | undefined = undefined
+	public sourceNameUpdateTimer: NodeJS.Timeout | undefined = undefined
 
 	public INTERVAL: any = undefined
 	public PROTOCOL_STATE: 'IDLE' | 'WAITING' | 'OK' = 'IDLE'

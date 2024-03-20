@@ -4,7 +4,7 @@ import { SOURCES } from '../constants.js'
 export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean {
 	const len = buffer.readUint8(0)
 
-	if (len < 6) {
+	if (len < 5) {
 		return false
 	}
 
@@ -35,32 +35,35 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 		console.log('INCOMING SOURCE NAME - NO SOURCE MATCH')
 	}
 
-	const name = buffer.subarray(6, len + 1).toString()
-	if (buffer.readUInt8(6) == 0xff) {
-		//we know what this is, it's just not worth doing anything with, so we don't return false.
-		//return false
-	} else {
-		// TODO: Handle feedbacks/variables for SOURCE NAME
-		//console.log('INCOMING: SOURCE NAME:', found, name)
+	let name = ''
 
-		//search the self.sourceNames array for the source name based on the found id, if it's not there, add it.
-		const foundSource = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === found?.id)
-		if (!foundSource) {
-			self.DATA.sourceNames.push({ id: found?.id, name: name })
-		} else {
-			foundSource.name = name
+	// If length is 5, it was empty
+	if (len >= 6) {
+		// 0xff is also empty, or restricted or something
+		if (buffer.readUInt8(6) != 0xff) {
+			name = buffer.subarray(6, len + 1).toString()
 		}
-
-		//start an interval to update actions with the sourceNames array - we only want to do it after we haven't had any new source name data for 1 second.
-		if (self.sourceNameInterval) {
-			clearInterval(self.sourceNameInterval)
-		}
-
-		self.sourceNameInterval = setInterval(() => {
-			self.updateActions()
-			self.updateFeedbacks()
-			clearInterval(self.sourceNameInterval)
-		}, 1000)
 	}
+
+	//search the self.sourceNames array for the source name based on the found id, if it's not there, add it.
+	const foundSource = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === found?.id)
+	if (!foundSource) {
+		self.DATA.sourceNames.push({ id: found?.id, name: name })
+	} else {
+		foundSource.name = name
+	}
+
+	//start a timer to update actions with the sourceNames array - we only want to do it after we haven't had any new source name data for 1 second.
+	if (self.sourceNameUpdateTimer) {
+		clearTimeout(self.sourceNameUpdateTimer)
+	}
+
+	self.sourceNameUpdateTimer = setTimeout(() => {
+		self.updateActions()
+		self.updateFeedbacks()
+		self.updateVariableValues()
+		delete self.sourceNameUpdateTimer
+	}, 1000)
+
 	return true
 }
