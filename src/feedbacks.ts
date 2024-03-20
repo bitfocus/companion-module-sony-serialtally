@@ -1,31 +1,18 @@
 import { combineRgb, CompanionFeedbackDefinitions } from '@companion-module/base'
 import type { xvsInstance } from './main.js'
-import * as constants from './constants.js'
+import { MEXPTEffectAddresses, BUSSES, AUXXPTEffectAddresses, Source, SOURCES } from './constants.js'
 
 export function UpdateFeedbacks(self: xvsInstance): void {
 	const feedbacks: CompanionFeedbackDefinitions = {}
 
-	let BUSSES: any[] = []
-	let SOURCES: any[] = []
-
-	let AUXES: any[] = []
-
-	switch (self.config.model) {
-		case 'xvs-9000':
-			BUSSES = constants.BUSSES_XVS9000
-			SOURCES = constants.SOURCES_XVS9000
-			break
-		case 'xvs-g1':
-			BUSSES = constants.BUSSES_XVSG1
-			SOURCES = constants.SOURCES_XVSG1
-			break
-		case 'mls-x1':
-			BUSSES = constants.BUSSES_MLSX1
-			SOURCES = constants.SOURCES_MLSX1
-			break
-	}
-
-	AUXES = constants.AUXXPTEffectAddresses
+	//rebuild the SOURCES array to include the label and the source name, if it exists
+	const listSOURCES: Source[] = Object.values(SOURCES[self.config.model]).map((source: Source) => {
+		const found = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === source.id)
+		if (found) {
+			source.label = `${source.label} (${found.name})`
+		}
+		return source
+	})
 
 	feedbacks.xptMEState = {
 		name: 'Selected Source is on Selected Bus of M/E',
@@ -39,22 +26,22 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.MEXPTEffectAddresses[0].id,
-				choices: constants.MEXPTEffectAddresses,
+				default: MEXPTEffectAddresses[0].id,
+				choices: MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
 				id: 'bus',
 				label: 'Bus Selection',
-				default: BUSSES[0].id,
-				choices: BUSSES,
+				default: BUSSES[self.config.model][0].id,
+				choices: BUSSES[self.config.model],
 			},
 			{
 				type: 'dropdown',
 				id: 'source',
 				label: 'Source Selection',
-				default: SOURCES[0].id,
-				choices: SOURCES,
+				default: listSOURCES[0].id,
+				choices: listSOURCES,
 			},
 		],
 		callback: (feedback) => {
@@ -62,7 +49,7 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 			const bus: any = feedback.options.bus
 			const source: any = feedback.options.source
 
-			if (self.DATA[eff][bus] == source) {
+			if (self.DATA.xpt[eff][bus] == source) {
 				return true
 			}
 
@@ -82,22 +69,22 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'aux',
 				label: 'Aux Selection',
-				default: AUXES[0].id,
-				choices: AUXES,
+				default: AUXXPTEffectAddresses[0].id,
+				choices: AUXXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
 				id: 'source',
 				label: 'Source Selection',
-				default: SOURCES[0].id,
-				choices: SOURCES,
+				default: listSOURCES[0].id,
+				choices: listSOURCES,
 			},
 		],
 		callback: (feedback) => {
 			const aux: any = feedback.options.aux
 			const source: any = feedback.options.source
 
-			if (self.DATA[aux] == source) {
+			if (self.DATA.xpt[aux] == source) {
 				return true
 			}
 

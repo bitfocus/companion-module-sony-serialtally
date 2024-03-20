@@ -17,21 +17,30 @@ export function INCOMING_AUX_XPT(self: xvsInstance, buffer: Buffer): boolean {
 	const data1 = buffer.readUInt8(3)
 	const data2 = buffer.readUInt8(4)
 
-	const found = AUXXPTEffectAddresses.find((obj) => obj.address === buffer.readUInt8(1))
+	const foundAux = AUXXPTEffectAddresses.find((obj) => obj.address === buffer.readUInt8(1))
 
-	if (!found) {
+	if (!foundAux) {
 		return false
 	}
 
 	const foundSource = SOURCES[self.config.model].find((obj) => obj.byte1 === data1 && obj.byte2 === data2)
 
 	if (!foundSource) {
-		console.log('AUXXPT: (NO SOURCE MATCH)', { data1, data2, found, foundSource })
+		console.log('AUXXPT: (NO SOURCE MATCH)', { data1, data2, foundAux, foundSource })
 		return false
 	}
 
 	// TODO: Handle feedbacks for AUX XPT
-	console.log('INCOMING: AUXXPT:', found, foundSource)
+	console.log('INCOMING: AUXXPT:', foundAux, foundSource)
+
+	//look in the self.DATA.xpt to see if the aux  is already there, if it is, update it, if not, add it.
+	//if the source is already there, update it, if not, add it.
+
+	if (!self.DATA.xpt[foundAux.id]) {
+		self.DATA.xpt[foundAux.id] = {}
+	}
+
+	self.DATA.xpt[foundAux.id] = foundSource.id
 
 	return true
 }

@@ -1,6 +1,15 @@
 import type { xvsInstance } from './main.js'
 import { CompanionActionDefinitions, CompanionInputFieldCheckbox } from '@companion-module/base'
-import * as constants from './constants.js'
+import {
+	MEXPTEffectAddresses,
+	BUSSES,
+	AUXXPTEffectAddresses,
+	Source,
+	SOURCES,
+	AUTOTRANSITION_EFF,
+	KEYS,
+} from './constants.js'
+
 import {
 	xptME,
 	xptAUX,
@@ -15,27 +24,14 @@ import {
 export function UpdateActions(self: xvsInstance): void {
 	const actions: CompanionActionDefinitions = {}
 
-	let BUSSES: any[] = []
-	let SOURCES: any[] = []
-
-	let AUXES: any[] = []
-
-	switch (self.config.model) {
-		case 'xvs-9000':
-			BUSSES = constants.BUSSES_XVS9000
-			SOURCES = constants.SOURCES_XVS9000
-			break
-		case 'xvs-g1':
-			BUSSES = constants.BUSSES_XVSG1
-			SOURCES = constants.SOURCES_XVSG1
-			break
-		case 'mls-x1':
-			BUSSES = constants.BUSSES_MLSX1
-			SOURCES = constants.SOURCES_MLSX1
-			break
-	}
-
-	AUXES = constants.AUXXPTEffectAddresses
+	//rebuild the SOURCES array to include the label and the source name, if it exists
+	const listSOURCES: Source[] = Object.values(SOURCES[self.config.model]).map((source: Source) => {
+		const found = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === source.id)
+		if (found) {
+			source.label = `${source.label} (${found.name})`
+		}
+		return source
+	})
 
 	actions.xptME = {
 		name: 'XPT: M/E',
@@ -44,22 +40,22 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.MEXPTEffectAddresses[0].id,
-				choices: constants.MEXPTEffectAddresses,
+				default: MEXPTEffectAddresses[0].id,
+				choices: MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
 				id: 'bus',
 				label: 'Bus Selection',
-				default: BUSSES[0].id,
-				choices: BUSSES,
+				default: BUSSES[self.config.model][0].id,
+				choices: BUSSES[self.config.model],
 			},
 			{
 				type: 'dropdown',
 				id: 'source',
 				label: 'Source Selection',
-				default: SOURCES[0].id,
-				choices: SOURCES,
+				default: listSOURCES[0].id,
+				choices: listSOURCES,
 			},
 		],
 		callback: async (event) => {
@@ -77,15 +73,15 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'aux',
 				label: 'Aux Selection',
-				default: AUXES[0].id,
-				choices: AUXES,
+				default: AUXXPTEffectAddresses[0].id,
+				choices: AUXXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
 				id: 'source',
 				label: 'Source Selection',
-				default: SOURCES[0].id,
-				choices: SOURCES,
+				default: listSOURCES[0].id,
+				choices: listSOURCES,
 			},
 		],
 		callback: async (event) => {
@@ -102,15 +98,15 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.MEXPTEffectAddresses[0].id,
-				choices: constants.MEXPTEffectAddresses,
+				default: MEXPTEffectAddresses[0].id,
+				choices: MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
 				id: 'cmd',
 				label: 'Command',
-				default: constants.AUTOTRANSITION_EFF[0].id,
-				choices: constants.AUTOTRANSITION_EFF,
+				default: AUTOTRANSITION_EFF[0].id,
+				choices: AUTOTRANSITION_EFF,
 			},
 			{
 				type: 'number',
@@ -136,15 +132,15 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.MEXPTEffectAddresses[0].id,
-				choices: constants.MEXPTEffectAddresses,
+				default: MEXPTEffectAddresses[0].id,
+				choices: MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
 				id: 'cmd',
 				label: 'Command',
-				default: constants.AUTOTRANSITION_EFF[0].id,
-				choices: constants.AUTOTRANSITION_EFF,
+				default: AUTOTRANSITION_EFF[0].id,
+				choices: AUTOTRANSITION_EFF,
 			},
 		],
 		callback: async (event) => {
@@ -161,15 +157,15 @@ export function UpdateActions(self: xvsInstance): void {
 				type: 'dropdown',
 				id: 'eff',
 				label: 'M/E Selection',
-				default: constants.MEXPTEffectAddresses[0].id,
-				choices: constants.MEXPTEffectAddresses,
+				default: MEXPTEffectAddresses[0].id,
+				choices: MEXPTEffectAddresses,
 			},
 			{
 				type: 'dropdown',
 				id: 'key',
 				label: 'Key Number',
-				default: constants.KEYS[0].id,
-				choices: constants.KEYS,
+				default: KEYS[0].id,
+				choices: KEYS,
 			},
 			{
 				type: 'dropdown',
@@ -190,7 +186,7 @@ export function UpdateActions(self: xvsInstance): void {
 		},
 	}
 
-	const reversedEFF = constants.MEXPTEffectAddresses.slice().reverse()
+	const reversedEFF = MEXPTEffectAddresses.slice().reverse()
 
 	actions.recallSnapshot = {
 		name: 'Recall Snapshot',

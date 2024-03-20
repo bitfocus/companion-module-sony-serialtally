@@ -14,7 +14,13 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	public tcp: any
-	public DATA: any = {}
+	public DATA: any = {
+		sourceNames: [],
+		xpt: [],
+	}
+
+	public sourceNameInterval: NodeJS.Timeout | undefined = undefined
+
 	public INTERVAL: any = undefined
 	public PROTOCOL_STATE: 'IDLE' | 'WAITING' | 'OK' = 'IDLE'
 
