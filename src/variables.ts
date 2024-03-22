@@ -50,7 +50,7 @@ export function UpdateVariableValues(self: xvsInstance): void {
 			if (sourceAddress && sourceName) {
 				variableObj[`${eff.id}_${bus.id}`] = sourceName
 			} else {
-				//self.log('debug', `UpdateVariableValues: No source found for ${eff.id}_${bus.id}`)
+				self.log('debug', `UpdateVariableValues: No source found for ${eff.id}_${bus.id}`)
 			}
 		}
 	}

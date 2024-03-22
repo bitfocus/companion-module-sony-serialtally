@@ -37,7 +37,7 @@ export function INCOMING_ME_XPT(self: xvsInstance, buffer: Buffer): boolean {
 	}
 
 	// TODO: handle feedbacks for ME XPT
-	//console.log('INCOMING: MEXPT:', foundME, foundBus, foundSource)
+	console.log('INCOMING: MEXPT:', foundME, foundBus, foundSource)
 
 	//store the current state of the M/E XPT
 	//look in the self.DATA.xpt to see if the ME's bus is already there, if it is, update it, if not, add it.

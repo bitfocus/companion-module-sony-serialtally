@@ -33,6 +33,7 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 	if (!found) {
 		self.log('error', 'INCOMING SOURCE NAME - NO SOURCE MATCH')
 		console.log('INCOMING SOURCE NAME - NO SOURCE MATCH')
+		return false
 	}
 
 	let name = ''
@@ -52,6 +53,8 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 	} else {
 		foundSource.name = name
 	}
+
+	//console.log('INCOMING SOURCE NAME:', found, name)
 
 	//start a timer to update actions with the sourceNames array - we only want to do it after we haven't had any new source name data for 1 second.
 	if (self.sourceNameUpdateTimer) {

@@ -10,6 +10,7 @@ export const MODELS: Model[] = [
 ]
 
 export type Models = 'xvs-9000' | 'xvs-g1' | 'mls-x1'
+
 export interface EffectAddress {
 	id: string
 	label: string
