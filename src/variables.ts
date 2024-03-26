@@ -6,6 +6,8 @@ import {
 	FMXPTEffectAddresses,
 	Source,
 	SOURCES,
+	GPI,
+	GPO,
 } from './constants.js'
 import { CompanionVariableValues } from '@companion-module/base'
 
@@ -32,6 +34,20 @@ export function UpdateVariableDefinitions(self: xvsInstance): void {
 		variables.push({
 			name: `${fm.label}`,
 			variableId: `${fm.id}`,
+		})
+	}
+
+	for (const gpi of GPI) {
+		variables.push({
+			name: `${gpi.label} State`,
+			variableId: `${gpi.id}`,
+		})
+	}
+
+	for (const gpo of GPO) {
+		variables.push({
+			name: `${gpo.label} State`,
+			variableId: `${gpo.id}`,
 		})
 	}
 
@@ -73,6 +89,16 @@ export function UpdateVariableValues(self: xvsInstance): void {
 		} else {
 			self.log('debug', `UpdateVariableValues: No source found for ${fm.id}`)
 		}
+	}
+
+	for (const gpi of GPI) {
+		const state = self.DATA.gpi[gpi.id]
+		variableObj[`${gpi.id}`] = state ? 'On' : 'Off'
+	}
+
+	for (const gpo of GPO) {
+		const state = self.DATA.gpo[gpo.id]
+		variableObj[`${gpo.id}`] = state ? 'On' : 'Off'
 	}
 
 	self.setVariableValues(variableObj)

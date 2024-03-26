@@ -19,6 +19,8 @@ import {
 	recallSnapshot,
 	macroRecall,
 	macroTake,
+	gpiIn,
+	gpiOut,
 } from './api.js'
 
 export function UpdateActions(self: xvsInstance): void {
@@ -285,6 +287,64 @@ export function UpdateActions(self: xvsInstance): void {
 		options: [],
 		callback: async () => {
 			macroTake(self)
+		},
+	}
+
+	actions.gpiIn = {
+		name: 'Activate GPI In',
+		options: [
+			{
+				type: 'number',
+				id: 'gpiNumber',
+				label: 'GPI Number',
+				default: 1,
+				min: 1,
+				max: 999,
+			},
+			{
+				type: 'dropdown',
+				id: 'gpiState',
+				label: 'GPI State',
+				default: 0x00,
+				choices: [
+					{ id: 0x00, label: 'High' },
+					{ id: 0x01, label: 'Low' },
+				],
+			},
+		],
+		callback: async (event) => {
+			const gpiNumber: any = event.options.gpiNumber
+			const gpiState: any = event.options.gpiState
+			gpiIn(self, gpiNumber, gpiState)
+		},
+	}
+
+	actions.gpiOut = {
+		name: 'Activate GPI Out',
+		options: [
+			{
+				type: 'number',
+				id: 'gpiNumber',
+				label: 'GPI Number',
+				default: 1,
+				min: 1,
+				max: 999,
+			},
+			{
+				type: 'dropdown',
+				id: 'gpiState',
+				label: 'GPI State',
+				default: 0x01,
+				choices: [
+					{ id: 0x01, label: 'High' },
+					{ id: 0x00, label: 'Low' },
+				],
+			},
+		],
+		callback: async (event) => {
+			const gpiNumber: any = event.options.gpiNumber
+			const gpiState: any = event.options.gpiState
+			gpiOut(self, gpiNumber, gpiState)
 		},
 	}
 

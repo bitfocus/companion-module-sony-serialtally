@@ -16,6 +16,7 @@ export interface EffectAddress {
 	label: string
 	address: number
 }
+
 export interface Key {
 	id: string
 	label: string
@@ -27,6 +28,12 @@ export interface Source {
 	label: string
 	byte1: number
 	byte2: number
+}
+
+export interface GPIO {
+	id: string
+	label: string
+	readByte: number
 }
 
 export const MEXPTEffectAddresses: EffectAddress[] = [
@@ -939,3 +946,25 @@ export const SOURCES: Record<Models, Source[]> = {
 	'xvs-g1': SOURCES_XVSG1,
 	'mls-x1': SOURCES_MLSX1,
 }
+
+export const GPI: GPIO[] = [
+	{ id: 'gpi1', label: 'GPI 1', readByte: 0x01 },
+	{ id: 'gpi2', label: 'GPI 2', readByte: 0x02 },
+	{ id: 'gpi3', label: 'GPI 3', readByte: 0x03 },
+	{ id: 'gpi4', label: 'GPI 4', readByte: 0x04 },
+	{ id: 'gpi5', label: 'GPI 5', readByte: 0x05 },
+	{ id: 'gpi6', label: 'GPI 6', readByte: 0x06 },
+	{ id: 'gpi7', label: 'GPI 7', readByte: 0x07 },
+	{ id: 'gpi8', label: 'GPI 8', readByte: 0x08 },
+]
+
+export const GPO: GPIO[] = [
+	{ id: 'gpo1', label: 'GPO 1', readByte: 0x01 },
+	{ id: 'gpo2', label: 'GPO 2', readByte: 0x02 },
+	{ id: 'gpo3', label: 'GPO 3', readByte: 0x03 },
+	{ id: 'gpo4', label: 'GPO 4', readByte: 0x04 },
+	{ id: 'gpo5', label: 'GPO 5', readByte: 0x05 },
+	{ id: 'gpo6', label: 'GPO 6', readByte: 0x06 },
+	{ id: 'gpo7', label: 'GPO 7', readByte: 0x07 },
+	{ id: 'gpo8', label: 'GPO 8', readByte: 0x08 },
+]

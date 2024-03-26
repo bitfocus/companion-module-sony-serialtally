@@ -141,6 +141,14 @@ export function readStates(self: xvsInstance): void {
 		bufferSource.writeUInt8(source.byte2, 5)
 		sendCommand(self, bufferSource, false)
 	}
+
+	//enable virtual GPI In/Out interface
+	const bufferGPI = Buffer.alloc(4)
+	bufferGPI.writeUInt8(0x03, 0) //3 bytes is the length of the command
+	bufferGPI.writeUInt8(0x02, 1)
+	bufferGPI.writeUInt8(0x26, 2)
+	bufferGPI.writeUInt8(0x01, 3)
+	sendCommand(self, bufferGPI, false)
 }
 
 function processData(self: xvsInstance, data: Buffer): void {
@@ -371,6 +379,30 @@ export function macroTake(self: xvsInstance): void {
 	buffer.writeUInt8(0x90, 2) //command
 	buffer.writeUInt8(0x00, 3) //command
 	buffer.writeUInt8(0x1c, 4) //command
+	sendCommand(self, buffer)
+}
+
+export function gpiIn(self: xvsInstance, gpiNumber: number, state: number): void {
+	self.log('debug', `activate gpiIn: ${gpiNumber}, ${state}`)
+	const buffer = Buffer.alloc(5)
+
+	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
+	buffer.writeUInt8(0x26, 1) //command
+	buffer.writeUInt8(0x80, 2) //command
+	buffer.writeUInt8(gpiNumber, 3) //gpi number
+	buffer.writeUInt8(state, 4) //state
+	sendCommand(self, buffer)
+}
+
+export function gpiOut(self: xvsInstance, gpiNumber: number, state: number): void {
+	self.log('debug', `activate gpiOut: ${gpiNumber}, ${state}`)
+	const buffer = Buffer.alloc(5)
+
+	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
+	buffer.writeUInt8(0x26, 1) //command
+	buffer.writeUInt8(0x81, 2) //command
+	buffer.writeUInt8(gpiNumber, 3) //gpi number
+	buffer.writeUInt8(state, 4) //state
 	sendCommand(self, buffer)
 }
 
