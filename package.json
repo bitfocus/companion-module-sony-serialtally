@@ -1,5 +1,5 @@
 {
-	"name": "sony-xvs",
+	"name": "sony-serialtally",
 	"version": "0.1.0",
 	"main": "dist/main.js",
 	"type": "module",
@@ -16,7 +16,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-sony-xvs.git"
+		"url": "git+https://github.com/bitfocus/companion-module-sony-serialtally.git"
 	},
 	"dependencies": {
 		"@companion-module/base": "~1.7.0"

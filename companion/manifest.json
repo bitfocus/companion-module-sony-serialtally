@@ -1,12 +1,12 @@
 {
-	"id": "sony-xvs",
-	"name": "Sony XVS",
-	"shortname": "xvs",
-	"description": "Control Sony XVS video switchers/vision mixers",
+	"id": "sony-serialtally",
+	"name": "Sony Serial Tally",
+	"shortname": "sony-switcher",
+	"description": "Control Sony video switchers/vision mixers using the serial tally protocol",
 	"version": "0.0.0",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-sony-xvs.git",
-	"bugs": "https://github.com/bitfocus/companion-module-sony-xvs/issues",
+	"repository": "git+https://github.com/bitfocus/companion-module-sony-serialtally.git",
+	"bugs": "https://github.com/bitfocus/companion-module-sony-serialtally/issues",
 	"maintainers": [
 		{
 			"name": "Joseph Adams",
@@ -21,6 +21,6 @@
 	},
 	"legacyIds": [],
 	"manufacturer": "Sony",
-	"products": ["XVS"],
-	"keywords": []
+	"products": ["XVS 9000/8000/7000/6000", "XVS-G1", "MLS-X1"],
+	"keywords": ["vision mixer", "video switcher", "sony", "serial", "tally"]
 }
