@@ -92,12 +92,12 @@ export function UpdateVariableValues(self: xvsInstance): void {
 	}
 
 	for (const gpi of GPI) {
-		const state = self.DATA.gpi[gpi.id]
+		const state = self.DATA.gpi?.[gpi.id] ?? null
 		variableObj[`${gpi.id}`] = state ? 'On' : 'Off'
 	}
 
 	for (const gpo of GPO) {
-		const state = self.DATA.gpo[gpo.id]
+		const state = self.DATA.gpo?.[gpo.id] ?? null
 		variableObj[`${gpo.id}`] = state ? 'On' : 'Off'
 	}
 
