@@ -182,8 +182,8 @@ export function UpdateActions(self: xvsInstance): void {
 		],
 		callback: async (event) => {
 			const eff: any = event.options.eff
-			const cmd: any = event.options.cmd
 			const key: any = event.options.key
+			const cmd: any = event.options.onoff
 			keyOnOff(self, eff, key, cmd)
 		},
 	}

@@ -254,7 +254,7 @@ export function transitionMECancel(self: xvsInstance, effId: string, cmdId: stri
 }
 
 export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: string): void {
-	self.log('debug', `transitionME: ${effId}, ${cmd}`)
+	self.log('debug', `keyOnOff: ${effId}, ${keyId} ${cmd}`)
 	const buffer = Buffer.alloc(4)
 
 	//look up the effect address
@@ -360,7 +360,7 @@ export function macroRecall(self: xvsInstance, macroNumber: string): void {
 	macroNumberByte1 = (macroNumberInt >> 8) & 0xff
 	macroNumberByte2 = macroNumberInt & 0xff
 
-	buffer.writeUInt8(0x03, 0) //6 bytes is the length of the command
+	buffer.writeUInt8(0x06, 0) //6 bytes is the length of the command
 	buffer.writeUInt8(0x22, 1) //command
 	buffer.writeUInt8(0x91, 2) //command
 	buffer.writeUInt8(0x00, 3) //command
