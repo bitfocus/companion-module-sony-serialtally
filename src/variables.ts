@@ -23,6 +23,13 @@ export function UpdateVariableDefinitions(self: xvsInstance): void {
 		}
 	}
 
+	for (const source of SOURCES[self.config.model]) {
+		variables.push({
+			name: `${source.label} Name`,
+			variableId: `source_${source.id}`,
+		})
+	}
+
 	for (const aux of AUXXPTEffectAddresses) {
 		variables.push({
 			name: `${aux.label}`,
@@ -65,9 +72,24 @@ export function UpdateVariableValues(self: xvsInstance): void {
 			const sourceName = SOURCES[self.config.model].find((source: Source) => source.id === sourceAddress)?.label
 			if (sourceAddress && sourceName) {
 				variableObj[`${eff.id}_${bus.id}`] = sourceName
+
+				//check to see if there's a discovered source name instead of just the default one, and replace it with that, if so
+				const sourceNameObj = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === sourceAddress)
+				if (sourceNameObj) {
+					variableObj[`${eff.id}_${bus.id}`] = sourceNameObj.name
+				}
 			} else {
 				self.log('debug', `UpdateVariableValues: No source found for ${eff.id}_${bus.id}`)
 			}
+		}
+	}
+
+	for (const source of SOURCES[self.config.model]) {
+		const sourceNameObj = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === source.id)
+		if (sourceNameObj) {
+			variableObj[`source_${source.id}`] = sourceNameObj.name
+		} else {
+			self.log('debug', `UpdateVariableValues: No source name found for ${source.id}`)
 		}
 	}
 
@@ -76,6 +98,12 @@ export function UpdateVariableValues(self: xvsInstance): void {
 		const sourceName = SOURCES[self.config.model].find((source: Source) => source.id === sourceAddress)?.label
 		if (sourceAddress && sourceName) {
 			variableObj[`${aux.id}`] = sourceName
+
+			//check to see if there's a discovered source name instead of just the default one, and replace it with that, if so
+			const sourceNameObj = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === sourceAddress)
+			if (sourceNameObj) {
+				variableObj[`${aux.id}`] = sourceNameObj.name
+			}
 		} else {
 			self.log('debug', `UpdateVariableValues: No source found for ${aux.id}`)
 		}
@@ -86,6 +114,12 @@ export function UpdateVariableValues(self: xvsInstance): void {
 		const sourceName = SOURCES[self.config.model].find((source: Source) => source.id === sourceAddress)?.label
 		if (sourceAddress && sourceName) {
 			variableObj[`${fm.id}`] = sourceName
+
+			//check to see if there's a discovered source name instead of just the default one, and replace it with that, if so
+			const sourceNameObj = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === sourceAddress)
+			if (sourceNameObj) {
+				variableObj[`${fm.id}`] = sourceNameObj.name
+			}
 		} else {
 			self.log('debug', `UpdateVariableValues: No source found for ${fm.id}`)
 		}

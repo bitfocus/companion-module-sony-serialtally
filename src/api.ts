@@ -179,6 +179,17 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 	}
 }
 
+export function copyME(self: xvsInstance, effId: string, copyEffId: string, busId: string): void {
+	console.log(`copyME: FROM ${effId}, TO ${copyEffId}, BUS ${busId}`)
+
+	//figure out what the source is on the eff, and then send that source to the copyEff
+	const sourceId: number = self.DATA.xpt[effId]
+
+	if (sourceId) {
+		xptME(self, copyEffId, busId, sourceId.toString())
+	}
+}
+
 export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void {
 	self.log('debug', `xptAUX: ${auxId}, ${sourceId}`)
 	const buffer = Buffer.alloc(5)
@@ -198,6 +209,17 @@ export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void
 		buffer.writeUInt8(sourceAddressByte1, 3) //source address byte 1
 		buffer.writeUInt8(sourceAddressByte2, 4) //source address byte 2
 		sendCommand(self, buffer)
+	}
+}
+
+export function copyAUX(self: xvsInstance, auxId: string, copyAuxId: string): void {
+	self.log('debug', `copyAUX: FROM ${auxId}, TO ${copyAuxId}`)
+
+	//figure out what the source is on the aux, and then send that source to the copyAux
+	const sourceId: number = self.DATA.xpt[auxId]
+
+	if (sourceId) {
+		xptAUX(self, copyAuxId, sourceId.toString())
 	}
 }
 
@@ -403,6 +425,12 @@ export function gpiOut(self: xvsInstance, gpiNumber: number, state: number): voi
 	buffer.writeUInt8(0x81, 2) //command
 	buffer.writeUInt8(gpiNumber, 3) //gpi number
 	buffer.writeUInt8(state, 4) //state
+	sendCommand(self, buffer)
+}
+
+export function customCommand(self: xvsInstance, command: string): void {
+	self.log('debug', `customCommand: ${command}`)
+	const buffer = Buffer.from(command, 'hex')
 	sendCommand(self, buffer)
 }
 

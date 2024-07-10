@@ -12,7 +12,9 @@ import {
 
 import {
 	xptME,
+	copyME,
 	xptAUX,
+	copyAUX,
 	transitionME,
 	transitionMECancel,
 	keyOnOff,
@@ -21,6 +23,7 @@ import {
 	macroTake,
 	gpiIn,
 	gpiOut,
+	customCommand,
 } from './api.js'
 
 export function UpdateActions(self: xvsInstance): void {
@@ -29,7 +32,7 @@ export function UpdateActions(self: xvsInstance): void {
 	//rebuild the SOURCES array to include the label and the source name, if it exists
 	const listSOURCES: Source[] = Object.values(SOURCES[self.config.model]).map((source: Source) => {
 		const found = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === source.id)
-		if (found) {
+		if (found && found.name) {
 			source.label = `${source.label} (${found.name})`
 		}
 		return source
@@ -68,6 +71,39 @@ export function UpdateActions(self: xvsInstance): void {
 		},
 	}
 
+	actions.copyME = {
+		name: 'Copy M/E',
+		options: [
+			{
+				type: 'dropdown',
+				id: 'eff',
+				label: 'COPY FROM: M/E Selection',
+				default: MEXPTEffectAddresses[0].id,
+				choices: MEXPTEffectAddresses,
+			},
+			{
+				type: 'dropdown',
+				id: 'copyEff',
+				label: 'COPY TO: M/E Selection',
+				default: MEXPTEffectAddresses[0].id,
+				choices: MEXPTEffectAddresses,
+			},
+			{
+				type: 'dropdown',
+				id: 'bus',
+				label: 'Bus Selection',
+				default: BUSSES[self.config.model][0].id,
+				choices: BUSSES[self.config.model],
+			},
+		],
+		callback: async (event) => {
+			const eff: any = event.options.eff
+			const copyEff: any = event.options.copyEff
+			const bus: any = event.options.bus
+			copyME(self, eff, copyEff, bus)
+		},
+	}
+
 	actions.xptAUX = {
 		name: 'XPT: AUX',
 		options: [
@@ -90,6 +126,31 @@ export function UpdateActions(self: xvsInstance): void {
 			const aux: any = event.options.aux
 			const source: any = event.options.source
 			xptAUX(self, aux, source)
+		},
+	}
+
+	actions.copyAUX = {
+		name: 'Copy AUX',
+		options: [
+			{
+				type: 'dropdown',
+				id: 'aux',
+				label: 'COPY FROM: Aux Selection',
+				default: AUXXPTEffectAddresses[0].id,
+				choices: AUXXPTEffectAddresses,
+			},
+			{
+				type: 'dropdown',
+				id: 'copyAux',
+				label: 'COPY TO: Aux Selection',
+				default: AUXXPTEffectAddresses[0].id,
+				choices: AUXXPTEffectAddresses,
+			},
+		],
+		callback: async (event) => {
+			const aux: any = event.options.aux
+			const copyAux: any = event.options.copyAux
+			copyAUX(self, aux, copyAux)
 		},
 	}
 
@@ -345,6 +406,35 @@ export function UpdateActions(self: xvsInstance): void {
 			const gpiNumber: any = event.options.gpiNumber
 			const gpiState: any = event.options.gpiState
 			gpiOut(self, gpiNumber, gpiState)
+		},
+	}
+
+	//send custom command string
+	actions.customCommand = {
+		name: 'Send Custom Command',
+		options: [
+			{
+				type: 'static-text',
+				id: 'info',
+				label: 'Send a custom command string to the device',
+				value: 'The command must conform to the Sony XVS protocol or it will be rejected. Use with caution.',
+			},
+			{
+				type: 'static-text',
+				id: 'example',
+				label: 'Example',
+				value: '0431C00001 would send Source 1 to Aux 2.',
+			},
+			{
+				type: 'textinput',
+				label: 'Command String',
+				id: 'commandString',
+				default: '',
+			},
+		],
+		callback: async (event) => {
+			const commandString: any = await self.parseVariablesInString(event.options.commandString?.toString() ?? '')
+			customCommand(self, commandString)
 		},
 	}
 
