@@ -31,6 +31,8 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 	public outgoingCommandQueue: Array<Buffer> = []
 	public outputTimer: NodeJS.Timeout | undefined = undefined
 
+	public reconnectInterval: NodeJS.Timeout | undefined = undefined
+
 	async init(config: ModuleConfig): Promise<void> {
 		await this.configUpdated(config)
 	}

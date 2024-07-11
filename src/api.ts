@@ -22,6 +22,7 @@ export function initConnection(self: xvsInstance): void {
 
 	if (self.config.host && self.config.host !== '') {
 		self.log('info', `Connecting to ${self.config.host}`)
+		self.updateStatus(InstanceStatus.Connecting, 'Connecting') // Set status to Connecting
 		self.tcp = new TCPHelper(self.config.host, self.config.port)
 		self.PROTOCOL_STATE = 'IDLE'
 
@@ -92,6 +93,21 @@ export function initConnection(self: xvsInstance): void {
 			self.log('error', `Error: ${err}`)
 			self.PROTOCOL_STATE = 'IDLE'
 			self.updateStatus(InstanceStatus.UnknownError, 'Connection error')
+
+			//if econnrefused, start a reeconnect interval
+			if (String(err).indexOf('ECONNREFUSED') > -1) {
+				//disconnect tcp
+				self.tcp.destroy()
+				self.tcp = undefined
+				self.log('info', 'Connection refused. Will attempt to reconnect in 30 seconds.')
+
+				//start reconnect
+				self.reconnectInterval = setInterval(() => {
+					self.log('info', 'Attempting to reconnect...')
+					initConnection(self)
+					self.reconnectInterval = undefined
+				}, 30000)
+			}
 		})
 	}
 }
