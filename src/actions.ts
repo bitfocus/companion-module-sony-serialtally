@@ -12,7 +12,7 @@ import {
 
 import {
 	xptME,
-	copyME,
+	//copyME,
 	xptAUX,
 	copyAUX,
 	transitionME,
@@ -71,7 +71,7 @@ export function UpdateActions(self: xvsInstance): void {
 		},
 	}
 
-	actions.copyME = {
+	/*actions.copyME = {
 		name: 'Copy M/E',
 		options: [
 			{
@@ -102,7 +102,7 @@ export function UpdateActions(self: xvsInstance): void {
 			const bus: any = event.options.bus
 			copyME(self, eff, copyEff, bus)
 		},
-	}
+	}*/
 
 	actions.xptAUX = {
 		name: 'XPT: AUX',
@@ -409,33 +409,37 @@ export function UpdateActions(self: xvsInstance): void {
 		},
 	}
 
-	//send custom command string
-	actions.customCommand = {
-		name: 'Send Custom Command',
-		options: [
-			{
-				type: 'static-text',
-				id: 'info',
-				label: 'Send a custom command string to the device',
-				value: 'The command must conform to the Sony XVS protocol or it will be rejected. Use with caution.',
+	if (self.config.allowCustomCommands == true) {
+		//send custom command string
+		actions.customCommand = {
+			name: 'Send Custom Command',
+			options: [
+				{
+					type: 'static-text',
+					id: 'info',
+					label: 'Send a custom command string to the device',
+					value: 'The command must conform to the Sony XVS protocol or it will be rejected. Use with caution.',
+				},
+				{
+					type: 'static-text',
+					id: 'example',
+					label: 'Example',
+					value: '0431C00001 would send Source 1 to Aux 2.',
+				},
+				{
+					type: 'textinput',
+					label: 'Command String',
+					id: 'commandString',
+					default: '',
+				},
+			],
+			callback: async (event) => {
+				const commandString: any = await self.parseVariablesInString(
+					event.options.commandString?.toString() ?? ''
+				)
+				customCommand(self, commandString)
 			},
-			{
-				type: 'static-text',
-				id: 'example',
-				label: 'Example',
-				value: '0431C00001 would send Source 1 to Aux 2.',
-			},
-			{
-				type: 'textinput',
-				label: 'Command String',
-				id: 'commandString',
-				default: '',
-			},
-		],
-		callback: async (event) => {
-			const commandString: any = await self.parseVariablesInString(event.options.commandString?.toString() ?? '')
-			customCommand(self, commandString)
-		},
+		}
 	}
 
 	self.setActionDefinitions(actions)

@@ -6,6 +6,7 @@ export interface ModuleConfig {
 	port: number
 	model: Models
 	advanced: boolean
+	allowCustomCommands: boolean
 	pollInterval: number
 	verbose: boolean
 }
@@ -17,7 +18,7 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			id: 'info',
 			label: 'Information',
 			width: 12,
-			value: 'This module is for controlling Sony XVS series switchers.',
+			value: 'This module is for controlling Sony switchers that support the XVS serial tally protocol.',
 		},
 		{
 			type: 'textinput',
@@ -56,6 +57,14 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			label: 'Advanced settings',
 			width: 12,
 			default: false,
+		},
+		{
+			type: 'checkbox',
+			id: 'allowCustomCommands',
+			label: 'Allow Custom Commands',
+			width: 12,
+			default: false,
+			isVisible: (options) => !!options['advanced'],
 		},
 		/*{
 			type: 'number',
