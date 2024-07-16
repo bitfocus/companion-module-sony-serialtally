@@ -6,7 +6,7 @@ This module is for controlling Sony video switchers/vision mixers that support t
 
 -   XPT M/E
 -   XPT Aux
--       Copy Aux
+-   Copy Aux
 -   Auto Transition M/E
 -   Key On/Off
 -   Recall Snapshot
