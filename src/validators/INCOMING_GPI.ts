@@ -20,7 +20,7 @@ export function INCOMING_GPI(self: xvsInstance, buffer: Buffer): boolean {
 		self.updateVariableValues()
 		self.checkFeedbacks()
 		clearInterval(self.gpioUpdateTimer)
-	}, 500)
+	}, self.INTERVAL_RATE)
 
 	return true
 }

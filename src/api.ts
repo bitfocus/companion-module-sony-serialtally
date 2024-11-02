@@ -20,6 +20,11 @@ export function initConnection(self: xvsInstance): void {
 	//create socket connection
 	self.log('debug', 'initConnection')
 
+	//check the config for the interval rate and update the global variable
+	if (self.config.intervalRate) {
+		self.INTERVAL_RATE = self.config.intervalRate
+	}
+
 	if (self.config.host && self.config.host !== '') {
 		self.log('info', `Connecting to ${self.config.host}`)
 		self.updateStatus(InstanceStatus.Connecting, 'Connecting') // Set status to Connecting

@@ -7,7 +7,7 @@ export interface ModuleConfig {
 	model: Models
 	advanced: boolean
 	allowCustomCommands: boolean
-	pollInterval: number
+	intervalRate: number
 	verbose: boolean
 }
 
@@ -66,10 +66,10 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			default: false,
 			isVisible: (options) => !!options['advanced'],
 		},
-		/*{
+		{
 			type: 'number',
-			id: 'pollInterval',
-			label: 'Polling Interval (ms)',
+			id: 'intervalRate',
+			label: 'Update Interval Rate (ms)',
 			width: 4,
 			min: 100,
 			max: 60000,
@@ -78,12 +78,12 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 		},
 		{
 			type: 'static-text',
-			id: 'pollInfo',
+			id: 'intervalRateInfo',
 			label: '',
 			width: 8,
-			value: 'This is the interval at which the module will poll the switcher for status updates.',
+			value: 'This is the interval at which the module will update variables, feedbacks, and other data as it arrives from the switcher.',
 			isVisible: (options) => !!options['advanced'],
-		},*/
+		},
 		{
 			type: 'checkbox',
 			id: 'verbose',

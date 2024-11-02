@@ -51,7 +51,7 @@ export function INCOMING_FM_XPT(self: xvsInstance, buffer: Buffer): boolean {
 		self.updateVariableValues()
 		self.checkFeedbacks()
 		clearInterval(self.xptInterval)
-	}, 500)
+	}, self.INTERVAL_RATE)
 
 	return true
 }

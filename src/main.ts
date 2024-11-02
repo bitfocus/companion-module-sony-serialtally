@@ -23,6 +23,8 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 	public sourceNameUpdateTimer: NodeJS.Timeout | undefined = undefined
 	public gpioUpdateTimer: NodeJS.Timeout | undefined = undefined
 
+	public INTERVAL_RATE = 500 //ms, how often to update variables and feedbacks, redefinable in config
+
 	public INTERVAL: any = undefined
 	public PROTOCOL_STATE: 'IDLE' | 'WAITING' | 'OK' = 'IDLE'
 
