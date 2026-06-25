@@ -131,9 +131,9 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 				{
 					type: 'dropdown',
 					id: 'color',
-					label: 'Tally Colour',
+					label: 'Tally Color',
 					default: 'red',
-					choices: [{ id: 'any', label: 'Any Colour' }, ...TALLY_COLORS],
+					choices: [{ id: 'any', label: 'Any Color' }, ...TALLY_COLORS],
 				},
 			],
 			callback: (feedback) => {

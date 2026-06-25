@@ -77,7 +77,7 @@ export function UpdateVariableDefinitions(self: xvsInstance): void {
 			}
 		}
 
-		//tally: per source, the group/colours it is currently tallied in
+		//tally: per source, the group/colors it is currently tallied in
 		for (const source of SOURCES[self.config.model]) {
 			variables.push({
 				name: `${source.label} Tally`,
@@ -177,7 +177,7 @@ export function UpdateVariableValues(self: xvsInstance): void {
 			return source ? source.label : `Source ${id}`
 		}
 
-		//per group/colour: comma-separated list of tallied source names + count
+		//per group/color: comma-separated list of tallied source names + count
 		for (const group of TALLY_GROUPS) {
 			for (const color of TALLY_COLORS) {
 				const set: Set<number> | undefined = tally[tallyKey(group.id, color.id)]
@@ -187,7 +187,7 @@ export function UpdateVariableValues(self: xvsInstance): void {
 			}
 		}
 
-		//per source: which group/colours it is tallied in (empty when not tallied)
+		//per source: which group/colors it is tallied in (empty when not tallied)
 		for (const source of SOURCES[self.config.model]) {
 			const memberships: string[] = []
 			for (const group of TALLY_GROUPS) {
