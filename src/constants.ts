@@ -968,3 +968,74 @@ export const GPO: GPIO[] = [
 	{ id: 'gpo7', label: 'GPO 7', readByte: 0x07 },
 	{ id: 'gpo8', label: 'GPO 8', readByte: 0x08 },
 ]
+
+// --- Serial Tally (protocol §13) ---------------------------------------------
+
+export type TallyColor = 'red' | 'green' | 'yellow'
+export type TallySize = 128 | 256
+
+export interface TallyGroup {
+	id: string
+	label: string
+}
+
+export interface TallyColorChoice {
+	id: TallyColor
+	label: string
+}
+
+// The switcher exposes 8 tally groups (GP1-GP8), each with a Red, Green and Yellow tally.
+export const TALLY_GROUPS: TallyGroup[] = [
+	{ id: 'gp1', label: 'GP1' },
+	{ id: 'gp2', label: 'GP2' },
+	{ id: 'gp3', label: 'GP3' },
+	{ id: 'gp4', label: 'GP4' },
+	{ id: 'gp5', label: 'GP5' },
+	{ id: 'gp6', label: 'GP6' },
+	{ id: 'gp7', label: 'GP7' },
+	{ id: 'gp8', label: 'GP8' },
+]
+
+export const TALLY_COLORS: TallyColorChoice[] = [
+	{ id: 'red', label: 'Red' },
+	{ id: 'green', label: 'Green' },
+	{ id: 'yellow', label: 'Yellow' },
+]
+
+export interface TallyCode {
+	group: string // gp1..gp8
+	color: TallyColor
+	size: TallySize
+	readCode: number // corresponding READ command code (pushCode - 0x80)
+}
+
+// Build the lookup from a pushed command code to its (group, color, size).
+// 128-bit: pushed 0x91..0xA8, 256-bit: pushed 0xD1..0xE8.
+// Within each: 0xn1..0xn0 = GPn Red/Green interleaved, +0x10 = GPn Yellow.
+// The READ command code is always the pushed code minus 0x80.
+function buildTallyCodes(): Record<number, TallyCode> {
+	const codes: Record<number, TallyCode> = {}
+	const bases: { base: number; size: TallySize }[] = [
+		{ base: 0x91, size: 128 },
+		{ base: 0xd1, size: 256 },
+	]
+	for (const { base, size } of bases) {
+		for (let n = 0; n < 8; n++) {
+			const group = `gp${n + 1}`
+			const redCode = base + n * 2
+			const greenCode = base + n * 2 + 1
+			const yellowCode = base + 0x10 + n
+			codes[redCode] = { group, color: 'red', size, readCode: redCode - 0x80 }
+			codes[greenCode] = { group, color: 'green', size, readCode: greenCode - 0x80 }
+			codes[yellowCode] = { group, color: 'yellow', size, readCode: yellowCode - 0x80 }
+		}
+	}
+	return codes
+}
+
+export const TALLY_CODES: Record<number, TallyCode> = buildTallyCodes()
+
+// Key used in self.DATA.tally for a (group, color) pair, e.g. 'gp1_red'.
+export function tallyKey(group: string, color: TallyColor): string {
+	return `${group}_${color}`
+}

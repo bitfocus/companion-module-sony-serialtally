@@ -3,16 +3,20 @@ import { INCOMING_AUX_XPT } from './INCOMING_AUX_XPT.js'
 import { INCOMING_FM_XPT } from './INCOMING_FM_XPT.js'
 import { INCOMING_ME_XPT } from './INCOMING_ME_XPT.js'
 import { INCOMING_SOURCE_NAME } from './INCOMING_SOURCE_NAME.js'
+import { INCOMING_TALLY } from './INCOMING_TALLY.js'
 import { INCOMING_GPI } from './INCOMING_GPI.js'
 import { INCOMING_GPO } from './INCOMING_GPO.js'
 
 type CommandHandler = (self: xvsInstance, buffer: Buffer) => boolean
 
+// INCOMING_TALLY must precede INCOMING_GPI: INCOMING_GPI is a catch-all that returns true
+// for any message reaching it, so any handler after it would never run.
 const handlers: CommandHandler[] = [
 	INCOMING_FM_XPT,
 	INCOMING_AUX_XPT,
 	INCOMING_ME_XPT,
 	INCOMING_SOURCE_NAME,
+	INCOMING_TALLY,
 	INCOMING_GPI,
 	INCOMING_GPO,
 ]

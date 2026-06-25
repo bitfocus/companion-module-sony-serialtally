@@ -11,6 +11,8 @@ import {
 	SOURCES,
 	AUTOTRANSITION_EFF,
 	KEYS,
+	TALLY_CODES,
+	TallySize,
 } from './constants.js'
 
 //import { CheckVariables } from './variables.js'
@@ -41,6 +43,7 @@ export function initConnection(self: xvsInstance): void {
 			self.DATA = {
 				sourceNames: [],
 				xpt: [],
+				tally: {},
 			}
 
 			// tell the module we are connected, and waiting for ack
@@ -153,6 +156,9 @@ export function readStates(self: xvsInstance): void {
 	//read source name setup
 	readSourceNames(self)
 
+	//read current tally state for the configured data size
+	readTally(self)
+
 	//enable virtual GPI In/Out interface
 	const bufferGPI = Buffer.alloc(4)
 	bufferGPI.writeUInt8(0x03, 0) //3 bytes is the length of the command
@@ -212,6 +218,29 @@ export function setSourceName(self: xvsInstance, sourceId: string, name: string)
 
 	//re-read the name back so variables and action labels reflect the change (positive feedback)
 	readSourceName(self, source)
+}
+
+export function readTally(self: xvsInstance): void {
+	//tally disabled - don't request anything
+	if (self.config.tallyDataSize !== '128' && self.config.tallyDataSize !== '256') {
+		return
+	}
+
+	//request the current tally state for every group/color of the configured data size
+	//(§13 Serial Tally, Read: 03 24 <readCode> FF). Live updates are pushed without a read.
+	const size: TallySize = self.config.tallyDataSize === '256' ? 256 : 128
+
+	for (const code of Object.values(TALLY_CODES)) {
+		if (code.size !== size) {
+			continue
+		}
+		const buffer = Buffer.alloc(4)
+		buffer.writeUInt8(0x03, 0) //3 bytes follow the count
+		buffer.writeUInt8(0x24, 1) //tally effect address
+		buffer.writeUInt8(code.readCode, 2) //read command code for this group/color
+		buffer.writeUInt8(0xff, 3)
+		sendCommand(self, buffer, false)
+	}
 }
 
 export function xptME(self: xvsInstance, effId: string, busId: string, sourceId: string): void {

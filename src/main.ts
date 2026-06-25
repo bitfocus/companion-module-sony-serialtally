@@ -17,11 +17,13 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 	public DATA: any = {
 		sourceNames: [],
 		xpt: [],
+		tally: {},
 	}
 
 	public xptInterval: NodeJS.Timeout | undefined = undefined
 	public sourceNameUpdateTimer: NodeJS.Timeout | undefined = undefined
 	public gpioUpdateTimer: NodeJS.Timeout | undefined = undefined
+	public tallyUpdateTimer: NodeJS.Timeout | undefined = undefined
 
 	public INTERVAL_RATE = 500 //ms, how often to update variables and feedbacks, redefinable in config
 
