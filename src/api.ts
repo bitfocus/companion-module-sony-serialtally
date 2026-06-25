@@ -151,17 +151,7 @@ export function readStates(self: xvsInstance): void {
 	}
 
 	//read source name setup
-	const bufferSource = Buffer.alloc(6)
-
-	for (const source of SOURCES[self.config.model]) {
-		bufferSource.writeUInt8(0x05, 0) //2 bytes is the length of the command
-		bufferSource.writeUInt8(0x20, 1)
-		bufferSource.writeUInt8(0x70, 2)
-		bufferSource.writeUInt8(0x50, 3)
-		bufferSource.writeUInt8(source.byte1, 4)
-		bufferSource.writeUInt8(source.byte2, 5)
-		sendCommand(self, bufferSource, false)
-	}
+	readSourceNames(self)
 
 	//enable virtual GPI In/Out interface
 	const bufferGPI = Buffer.alloc(4)
@@ -174,6 +164,54 @@ export function readStates(self: xvsInstance): void {
 
 function processData(self: xvsInstance, data: Buffer): void {
 	INCOMING_HANDLE(self, data)
+}
+
+export function readSourceName(self: xvsInstance, source: Source): void {
+	//request the source name for a single source
+	const buffer = Buffer.alloc(6)
+	buffer.writeUInt8(0x05, 0) //5 bytes follow the count
+	buffer.writeUInt8(0x20, 1)
+	buffer.writeUInt8(0x70, 2)
+	buffer.writeUInt8(0x50, 3)
+	buffer.writeUInt8(source.byte1, 4) //source number byte 1
+	buffer.writeUInt8(source.byte2, 5) //source number byte 2
+	sendCommand(self, buffer, false)
+}
+
+export function readSourceNames(self: xvsInstance): void {
+	//request the source names for every source on the current model
+	for (const source of SOURCES[self.config.model]) {
+		readSourceName(self, source)
+	}
+}
+
+export function setSourceName(self: xvsInstance, sourceId: string, name: string): void {
+	self.log('debug', `setSourceName: ${sourceId}, ${name}`)
+
+	//look up the source address
+	const source: Source | undefined = SOURCES[self.config.model].find((x) => x.id === parseInt(sourceId))
+
+	if (!source) {
+		self.log('error', `setSourceName: No source found for ${sourceId}`)
+		return
+	}
+
+	//source name is ASCII, max 16 characters (§12-4 Source Name Setup, Write)
+	const nameBuffer = Buffer.from(name.substring(0, 16), 'ascii')
+	const nameLength = nameBuffer.length
+
+	const buffer = Buffer.alloc(6 + nameLength)
+	buffer.writeUInt8(nameLength + 5, 0) //byte count = name length + 5
+	buffer.writeUInt8(0x20, 1)
+	buffer.writeUInt8(0xf0, 2) //write command code
+	buffer.writeUInt8(0x50, 3)
+	buffer.writeUInt8(source.byte1, 4) //source number byte 1
+	buffer.writeUInt8(source.byte2, 5) //source number byte 2
+	nameBuffer.copy(buffer, 6) //source name bytes
+	sendCommand(self, buffer)
+
+	//re-read the name back so variables and action labels reflect the change (positive feedback)
+	readSourceName(self, source)
 }
 
 export function xptME(self: xvsInstance, effId: string, busId: string, sourceId: string): void {

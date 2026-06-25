@@ -24,6 +24,8 @@ import {
 	gpiIn,
 	gpiOut,
 	customCommand,
+	readSourceNames,
+	setSourceName,
 } from './api.js'
 
 export function UpdateActions(self: xvsInstance): void {
@@ -33,7 +35,8 @@ export function UpdateActions(self: xvsInstance): void {
 	const listSOURCES: Source[] = Object.values(SOURCES[self.config.model]).map((source: Source) => {
 		const found = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === source.id)
 		if (found && found.name) {
-			source.label = `${source.label} (${found.name})`
+			//return a copy so we never mutate the shared SOURCES constant's label
+			return { ...source, label: `${source.label} (${found.name})` }
 		}
 		return source
 	})
@@ -406,6 +409,39 @@ export function UpdateActions(self: xvsInstance): void {
 			const gpiNumber: any = event.options.gpiNumber
 			const gpiState: any = event.options.gpiState
 			gpiOut(self, gpiNumber, gpiState)
+		},
+	}
+
+	actions.setSourceName = {
+		name: 'Set Source Name',
+		options: [
+			{
+				type: 'dropdown',
+				id: 'source',
+				label: 'Source Selection',
+				default: listSOURCES[0].id,
+				choices: listSOURCES,
+			},
+			{
+				type: 'textinput',
+				id: 'name',
+				label: 'Source Name (max 16 characters)',
+				default: '',
+				useVariables: true,
+			},
+		],
+		callback: async (event) => {
+			const source: any = event.options.source
+			const name: string = await self.parseVariablesInString(event.options.name?.toString() ?? '')
+			setSourceName(self, source, name)
+		},
+	}
+
+	actions.refreshSourceNames = {
+		name: 'Refresh Source Names',
+		options: [],
+		callback: async () => {
+			readSourceNames(self)
 		},
 	}
 
