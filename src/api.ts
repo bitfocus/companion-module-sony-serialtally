@@ -327,11 +327,11 @@ export function recallSnapshot(
 	regionSelectPart1: string[],
 	registerNumber: number,
 	regionSelectPart2: number[],
-	regionselectPart3: string[]
+	regionselectPart3: string[],
 ): void {
 	self.log(
 		'debug',
-		`recallSnapshot: ${regionSelectPart1}, ${registerNumber}, ${regionSelectPart2}, ${regionselectPart3}`
+		`recallSnapshot: ${regionSelectPart1}, ${registerNumber}, ${regionSelectPart2}, ${regionselectPart3}`,
 	)
 	const buffer = Buffer.alloc(7)
 

@@ -435,7 +435,7 @@ export function UpdateActions(self: xvsInstance): void {
 			],
 			callback: async (event) => {
 				const commandString: any = await self.parseVariablesInString(
-					event.options.commandString?.toString() ?? ''
+					event.options.commandString?.toString() ?? '',
 				)
 				customCommand(self, commandString)
 			},
