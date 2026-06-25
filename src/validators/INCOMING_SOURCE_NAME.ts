@@ -21,7 +21,7 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 	}
 
 	if (len > 16 + 5) {
-		console.log('ughhhg', 'text too long or something.')
+		self.log('debug', 'INCOMING SOURCE NAME - text too long or something.')
 		return false
 	}
 
@@ -32,7 +32,6 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 
 	if (!found) {
 		self.log('error', 'INCOMING SOURCE NAME - NO SOURCE MATCH')
-		console.log('INCOMING SOURCE NAME - NO SOURCE MATCH')
 		return false
 	}
 

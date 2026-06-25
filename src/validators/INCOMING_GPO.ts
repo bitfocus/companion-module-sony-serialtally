@@ -7,7 +7,7 @@ export function INCOMING_GPO(self: xvsInstance, buffer: Buffer): boolean {
 	const data2 = buffer.readUInt8(4)
 
 	// TODO: handle feedbacks for GPIO
-	console.log('INCOMING: GPI OUT:', data1, data2)
+	self.log('debug', `INCOMING: GPI OUT: ${data1}, ${data2}`)
 
 	//it should save it to the internal store like this: self.DATA.gpo[gpo.id] = state where state is 0 or 1, 1 being high, 0 being low (opposite of GPI)
 

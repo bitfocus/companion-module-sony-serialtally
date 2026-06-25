@@ -26,12 +26,12 @@ export function INCOMING_FM_XPT(self: xvsInstance, buffer: Buffer): boolean {
 	const foundSource = SOURCES[self.config.model].find((obj) => obj.byte1 === data1 && obj.byte2 === data2)
 
 	if (!foundSource) {
-		console.log('FMXPT: (NO SOURCE MATCH)', { data1, data2, foundFM, foundSource })
+		self.log('debug', `FMXPT: (NO SOURCE MATCH) ${JSON.stringify({ data1, data2, foundFM, foundSource })}`)
 		return false
 	}
 
 	// TODO: Handle feedbacks for FM XPT
-	console.log('INCOMING: FMXPT:', foundFM, foundSource)
+	self.log('debug', `INCOMING: FMXPT: ${JSON.stringify(foundFM)} ${JSON.stringify(foundSource)}`)
 
 	//look in the self.DATA.xpt to see if the aux  is already there, if it is, update it, if not, add it.
 	//if the source is already there, update it, if not, add it.

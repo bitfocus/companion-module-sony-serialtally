@@ -58,7 +58,7 @@ export function initConnection(self: xvsInstance): void {
 
 			// check if we have a complete command
 			if (self.incomingData.readUInt8(0) === 0x84) {
-				console.log('got ACK')
+				self.log('debug', 'got ACK')
 				// this is an ACK, we can ignore it
 				self.incomingData = self.incomingData.subarray(1)
 				self.updateStatus(InstanceStatus.Ok)
@@ -244,7 +244,7 @@ export function readTally(self: xvsInstance): void {
 }
 
 export function xptME(self: xvsInstance, effId: string, busId: string, sourceId: string): void {
-	console.log(`xptME: ${effId}, ${busId}, ${sourceId}`)
+	self.log('debug', `xptME: ${effId}, ${busId}, ${sourceId}`)
 	const buffer = Buffer.alloc(5)
 
 	//look up the effect, bus, and source addresses
@@ -268,7 +268,7 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 }
 
 export function copyME(self: xvsInstance, effId: string, copyEffId: string, busId: string): void {
-	console.log(`copyME: FROM ${effId}, TO ${copyEffId}, BUS ${busId}`)
+	self.log('debug', `copyME: FROM ${effId}, TO ${copyEffId}, BUS ${busId}`)
 
 	//figure out what the source is on the eff, and then send that source to the copyEff
 	const sourceId: number = self.DATA.xpt[effId]
