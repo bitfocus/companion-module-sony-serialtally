@@ -19,14 +19,16 @@
 		"url": "git+https://github.com/bitfocus/companion-module-sony-serialtally.git"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.7.0"
+		"@companion-module/base": "~1.14.1"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^1.5.2",
-		"husky": "^9.0.10",
-		"lint-staged": "^15.2.2",
-		"typescript": "^5.3.3"
+		"@companion-module/tools": "^2.7.2",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.0.8",
+		"prettier": "^3.8.4",
+		"typescript": "^6.0.3"
 	},
+	"packageManager": "yarn@4.16.0",
 	"prettier": "@companion-module/tools/.prettierrc.json",
 	"lint-staged": {
 		"*.{css,json,md,scss}": [
