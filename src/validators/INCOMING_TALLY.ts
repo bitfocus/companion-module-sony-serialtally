@@ -72,9 +72,10 @@ export function INCOMING_TALLY(self: xvsInstance, buffer: Buffer): boolean {
 		clearTimeout(self.tallyUpdateTimer)
 	}
 
+	//tally data only affects the tally feedback
 	self.tallyUpdateTimer = setTimeout(() => {
 		self.updateVariableValues()
-		self.checkFeedbacks()
+		self.checkFeedbacks('tallySource')
 		delete self.tallyUpdateTimer
 	}, self.INTERVAL_RATE)
 

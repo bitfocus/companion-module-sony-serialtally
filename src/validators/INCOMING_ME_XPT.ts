@@ -36,14 +36,9 @@ export function INCOMING_ME_XPT(self: xvsInstance, buffer: Buffer): boolean {
 		return false
 	}
 
-	// TODO: handle feedbacks for ME XPT
 	self.logVerbose(
 		`INCOMING: MEXPT: ${JSON.stringify(foundME)} ${JSON.stringify(foundBus)} ${JSON.stringify(foundSource)}`,
 	)
-
-	//store the current state of the M/E XPT
-	//look in the self.DATA.xpt to see if the ME's bus is already there, if it is, update it, if not, add it.
-	//if the source is already there, update it, if not, add it.
 
 	if (!self.DATA.xpt[foundME.id]) {
 		self.DATA.xpt[foundME.id] = {}
@@ -59,10 +54,9 @@ export function INCOMING_ME_XPT(self: xvsInstance, buffer: Buffer): boolean {
 		clearInterval(self.xptInterval)
 	}
 
-	//update variables and feedbacks
 	self.xptInterval = setTimeout(() => {
 		self.updateVariableValues()
-		self.checkFeedbacks()
+		self.checkFeedbacks('xptMEState', 'xptAUXState', 'xptFMState')
 		clearInterval(self.xptInterval)
 	}, self.INTERVAL_RATE)
 

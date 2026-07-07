@@ -30,11 +30,7 @@ export function INCOMING_FM_XPT(self: xvsInstance, buffer: Buffer): boolean {
 		return false
 	}
 
-	// TODO: Handle feedbacks for FM XPT
 	self.logVerbose(`INCOMING: FMXPT: ${JSON.stringify(foundFM)} ${JSON.stringify(foundSource)}`)
-
-	//look in the self.DATA.xpt to see if the aux  is already there, if it is, update it, if not, add it.
-	//if the source is already there, update it, if not, add it.
 
 	if (!self.DATA.xpt[foundFM.id]) {
 		self.DATA.xpt[foundFM.id] = {}
@@ -46,10 +42,9 @@ export function INCOMING_FM_XPT(self: xvsInstance, buffer: Buffer): boolean {
 		clearInterval(self.xptInterval)
 	}
 
-	//update variables and feedbacks
 	self.xptInterval = setTimeout(() => {
 		self.updateVariableValues()
-		self.checkFeedbacks()
+		self.checkFeedbacks('xptMEState', 'xptAUXState', 'xptFMState')
 		clearInterval(self.xptInterval)
 	}, self.INTERVAL_RATE)
 

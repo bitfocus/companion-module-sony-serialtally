@@ -4,6 +4,7 @@ import {
 	MEXPTEffectAddresses,
 	BUSSES,
 	AUXXPTEffectAddresses,
+	FMXPTEffectAddresses,
 	Source,
 	SOURCES,
 	TALLY_GROUPS,
@@ -95,7 +96,41 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 		},
 	}
 
-	//tally feedback is only available when tally is enabled in config
+	feedbacks.xptFMState = {
+		name: 'Selected Source is on Selected FM',
+		type: 'boolean',
+		defaultStyle: {
+			bgcolor: combineRgb(255, 0, 0),
+			color: combineRgb(0, 0, 0),
+		},
+		options: [
+			{
+				type: 'dropdown',
+				id: 'fm',
+				label: 'FM Selection',
+				default: FMXPTEffectAddresses[0].id,
+				choices: FMXPTEffectAddresses,
+			},
+			{
+				type: 'dropdown',
+				id: 'source',
+				label: 'Source Selection',
+				default: SOURCES[self.config.model][0].id,
+				choices: SOURCES[self.config.model],
+			},
+		],
+		callback: (feedback) => {
+			const fm: any = feedback.options.fm
+			const source: any = feedback.options.source
+
+			if (self.DATA.xpt[fm] == source) {
+				return true
+			}
+
+			return false
+		},
+	}
+
 	if (self.config.tallyDataSize === '128' || self.config.tallyDataSize === '256') {
 		//source list including discovered names, for the tally source picker
 		const listSOURCES: Source[] = SOURCES[self.config.model].map((source: Source) => {
