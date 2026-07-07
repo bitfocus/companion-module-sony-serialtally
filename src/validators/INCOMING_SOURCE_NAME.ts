@@ -63,6 +63,7 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 	self.sourceNameUpdateTimer = setTimeout(() => {
 		self.updateActions()
 		self.updateFeedbacks()
+		self.updatePresets()
 		self.updateVariableValues()
 		delete self.sourceNameUpdateTimer
 	}, self.INTERVAL_RATE)

@@ -105,7 +105,7 @@ export function initConnection(self: xvsInstance): void {
 			self.incomingData = Buffer.concat([self.incomingData, data])
 
 			// check if we have a complete command
-			if (self.incomingData.readUInt8(0) === 0x84) {
+			if (self.incomingData.length > 0 && self.incomingData.readUInt8(0) === 0x84) {
 				self.logVerbose('got ACK')
 				// this is an ACK, we can ignore it
 				self.incomingData = self.incomingData.subarray(1)
@@ -127,7 +127,7 @@ export function initConnection(self: xvsInstance): void {
 			if (self.PROTOCOL_STATE === 'OK') {
 				while (self.incomingData.length > 0) {
 					const commandLength = self.incomingData.readUInt8(0)
-					if (self.incomingData.length >= commandLength) {
+					if (self.incomingData.length >= commandLength + 1) {
 						const command = self.incomingData.subarray(0, commandLength + 1)
 						self.incomingData = self.incomingData.subarray(commandLength + 1)
 						self.incomingCommandQueue.push(command)

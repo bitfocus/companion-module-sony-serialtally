@@ -114,10 +114,10 @@ export function UpdateVariableValues(self: xvsInstance): void {
 
 	for (const source of SOURCES[self.config.model]) {
 		const sourceNameObj = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === source.id)
-		if (sourceNameObj) {
+		if (sourceNameObj && sourceNameObj.name) {
 			variableObj[`source_${source.id}`] = sourceNameObj.name
 		} else {
-			self.logVerbose(`UpdateVariableValues: No source name found for ${source.id}`)
+			variableObj[`source_${source.id}`] = source.label
 		}
 	}
 

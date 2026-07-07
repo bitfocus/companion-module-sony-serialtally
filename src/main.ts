@@ -4,6 +4,7 @@ import { UpdateVariableDefinitions, UpdateVariableValues } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
+import { UpdatePresets } from './presets.js'
 import * as api from './api.js'
 
 export class xvsInstance extends InstanceBase<ModuleConfig> {
@@ -68,7 +69,9 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
+		this.updatePresets() // export presets
 		this.updateVariableDefinitions() // export variable definitions
+		this.updateVariableValues() // export variable values
 
 		api.initConnection(this) //setup connection
 	}
@@ -84,6 +87,10 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 
 	updateFeedbacks(): void {
 		UpdateFeedbacks(this)
+	}
+
+	updatePresets(): void {
+		UpdatePresets(this)
 	}
 
 	updateVariableDefinitions(): void {
