@@ -57,6 +57,7 @@ export function stopConnection(self: xvsInstance): void {
 	}
 
 	self.PROTOCOL_STATE = 'IDLE'
+	self.wasConnected = false
 	self.incomingData = Buffer.alloc(0)
 	self.incomingCommandQueue = []
 	self.outgoingCommandQueue = []
@@ -105,11 +106,12 @@ export function initConnection(self: xvsInstance): void {
 
 			// check if we have a complete command
 			if (self.incomingData.readUInt8(0) === 0x84) {
-				self.log('debug', 'got ACK')
+				self.logVerbose('got ACK')
 				// this is an ACK, we can ignore it
 				self.incomingData = self.incomingData.subarray(1)
 				self.updateStatus(InstanceStatus.Ok)
-				self.log('debug', 'ACK received, connected.')
+				self.wasConnected = true
+				self.logVerbose('ACK received, connected.')
 
 				if (self.PROTOCOL_STATE === 'WAITING') {
 					readStates(self)
@@ -151,7 +153,12 @@ export function initConnection(self: xvsInstance): void {
 
 			//if econnrefused, schedule a single reconnect attempt
 			if (String(err).indexOf('ECONNREFUSED') > -1) {
-				self.log('info', 'Connection refused. Will attempt to reconnect in 30 seconds.')
+				//only notify when we drop from a previously connected state, so we don't
+				//spam this message on every failed reconnect attempt
+				if (self.wasConnected) {
+					self.log('info', 'Connection refused. Will attempt to reconnect in 30 seconds.')
+				}
+				self.wasConnected = false
 
 				//clear any pending reconnect before scheduling a new one
 				if (self.reconnectInterval) {
@@ -241,7 +248,7 @@ export function readSourceNames(self: xvsInstance): void {
 }
 
 export function setSourceName(self: xvsInstance, sourceId: string, name: string): void {
-	self.log('debug', `setSourceName: ${sourceId}, ${name}`)
+	self.logVerbose(`setSourceName: ${sourceId}, ${name}`)
 
 	//look up the source address
 	const source: Source | undefined = SOURCES[self.config.model].find((x) => x.id === parseInt(sourceId))
@@ -293,7 +300,7 @@ export function readTally(self: xvsInstance): void {
 }
 
 export function xptME(self: xvsInstance, effId: string, busId: string, sourceId: string): void {
-	self.log('debug', `xptME: ${effId}, ${busId}, ${sourceId}`)
+	self.logVerbose(`xptME: ${effId}, ${busId}, ${sourceId}`)
 	const buffer = Buffer.alloc(5)
 
 	//look up the effect, bus, and source addresses
@@ -317,7 +324,7 @@ export function xptME(self: xvsInstance, effId: string, busId: string, sourceId:
 }
 
 export function copyME(self: xvsInstance, effId: string, copyEffId: string, busId: string): void {
-	self.log('debug', `copyME: FROM ${effId}, TO ${copyEffId}, BUS ${busId}`)
+	self.logVerbose(`copyME: FROM ${effId}, TO ${copyEffId}, BUS ${busId}`)
 
 	//figure out what the source is on the eff, and then send that source to the copyEff
 	const sourceId: number = self.DATA.xpt[effId]
@@ -328,7 +335,7 @@ export function copyME(self: xvsInstance, effId: string, copyEffId: string, busI
 }
 
 export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void {
-	self.log('debug', `xptAUX: ${auxId}, ${sourceId}`)
+	self.logVerbose(`xptAUX: ${auxId}, ${sourceId}`)
 	const buffer = Buffer.alloc(5)
 
 	//look up the aux and source addresses
@@ -350,7 +357,7 @@ export function xptAUX(self: xvsInstance, auxId: string, sourceId: string): void
 }
 
 export function copyAUX(self: xvsInstance, auxId: string, copyAuxId: string): void {
-	self.log('debug', `copyAUX: FROM ${auxId}, TO ${copyAuxId}`)
+	self.logVerbose(`copyAUX: FROM ${auxId}, TO ${copyAuxId}`)
 
 	//figure out what the source is on the aux, and then send that source to the copyAux
 	const sourceId: number = self.DATA.xpt[auxId]
@@ -361,7 +368,7 @@ export function copyAUX(self: xvsInstance, auxId: string, copyAuxId: string): vo
 }
 
 export function transitionME(self: xvsInstance, effId: string, cmdId: string, transRate: number): void {
-	self.log('debug', `transitionME: ${effId}, ${cmdId}`)
+	self.logVerbose(`transitionME: ${effId}, ${cmdId}`)
 	const buffer = Buffer.alloc(7)
 
 	//look up the effect address
@@ -390,7 +397,7 @@ export function transitionME(self: xvsInstance, effId: string, cmdId: string, tr
 }
 
 export function transitionMECancel(self: xvsInstance, effId: string, cmdId: string): void {
-	self.log('debug', `transitionMECancel: ${effId}, ${cmdId}`)
+	self.logVerbose(`transitionMECancel: ${effId}, ${cmdId}`)
 	const buffer = Buffer.alloc(5)
 
 	//look up the effect address
@@ -413,7 +420,7 @@ export function transitionMECancel(self: xvsInstance, effId: string, cmdId: stri
 }
 
 export function keyOnOff(self: xvsInstance, effId: string, keyId: string, cmd: string): void {
-	self.log('debug', `keyOnOff: ${effId}, ${keyId} ${cmd}`)
+	self.logVerbose(`keyOnOff: ${effId}, ${keyId} ${cmd}`)
 	const buffer = Buffer.alloc(4)
 
 	//look up the effect address
@@ -445,8 +452,7 @@ export function recallSnapshot(
 	regionSelectPart2: number[],
 	regionselectPart3: string[],
 ): void {
-	self.log(
-		'debug',
+	self.logVerbose(
 		`recallSnapshot: ${regionSelectPart1}, ${registerNumber}, ${regionSelectPart2}, ${regionselectPart3}`,
 	)
 	const buffer = Buffer.alloc(7)
@@ -508,7 +514,7 @@ export function recallSnapshot(
 }
 
 export function macroRecall(self: xvsInstance, macroNumber: string): void {
-	self.log('debug', `macroRecall: ${macroNumber}`)
+	self.logVerbose(`macroRecall: ${macroNumber}`)
 	const buffer = Buffer.alloc(7)
 
 	let macroNumberByte1 = 0
@@ -530,7 +536,7 @@ export function macroRecall(self: xvsInstance, macroNumber: string): void {
 }
 
 export function macroTake(self: xvsInstance): void {
-	self.log('debug', `macroTake`)
+	self.logVerbose(`macroTake`)
 	const buffer = Buffer.alloc(5)
 
 	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
@@ -542,7 +548,7 @@ export function macroTake(self: xvsInstance): void {
 }
 
 export function gpiIn(self: xvsInstance, gpiNumber: number, state: number): void {
-	self.log('debug', `activate gpiIn: ${gpiNumber}, ${state}`)
+	self.logVerbose(`activate gpiIn: ${gpiNumber}, ${state}`)
 	const buffer = Buffer.alloc(5)
 
 	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
@@ -554,7 +560,7 @@ export function gpiIn(self: xvsInstance, gpiNumber: number, state: number): void
 }
 
 export function gpiOut(self: xvsInstance, gpiNumber: number, state: number): void {
-	self.log('debug', `activate gpiOut: ${gpiNumber}, ${state}`)
+	self.logVerbose(`activate gpiOut: ${gpiNumber}, ${state}`)
 	const buffer = Buffer.alloc(5)
 
 	buffer.writeUInt8(0x04, 0) //4 bytes is the length of the command
@@ -566,7 +572,7 @@ export function gpiOut(self: xvsInstance, gpiNumber: number, state: number): voi
 }
 
 export function customCommand(self: xvsInstance, command: string): void {
-	self.log('debug', `customCommand: ${command}`)
+	self.logVerbose(`customCommand: ${command}`)
 	const buffer = Buffer.from(command, 'hex')
 	sendCommand(self, buffer)
 }

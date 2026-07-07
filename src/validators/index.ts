@@ -27,5 +27,5 @@ export function INCOMING_HANDLE(self: xvsInstance, buffer: Buffer): void {
 			return
 		}
 	}
-	self.log('debug', `UNKNOWN COMMAND> ${buffer.toString('hex')}`)
+	self.logVerbose(`UNKNOWN COMMAND> ${buffer.toString('hex')}`)
 }

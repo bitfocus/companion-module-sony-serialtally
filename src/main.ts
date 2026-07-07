@@ -37,8 +37,22 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 
 	public reconnectInterval: NodeJS.Timeout | undefined = undefined
 
+	//tracks whether we have reached a connected (ACK received) state, so we only
+	//log the "connection refused, will reconnect" notice once per disconnect rather
+	//than on every failed reconnect attempt
+	public wasConnected: boolean = false
+
 	async init(config: ModuleConfig): Promise<void> {
 		await this.configUpdated(config)
+	}
+
+	// Debug logging that only fires when verbose logging is enabled in the config.
+	// Used for high-frequency messages (incoming data, variable updates) that would
+	// otherwise spam the log on every poll cycle.
+	logVerbose(message: string): void {
+		if (this.config?.verbose) {
+			this.log('debug', message)
+		}
 	}
 
 	// When module gets deleted

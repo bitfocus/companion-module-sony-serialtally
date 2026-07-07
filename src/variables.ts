@@ -107,7 +107,7 @@ export function UpdateVariableValues(self: xvsInstance): void {
 					variableObj[`${eff.id}_${bus.id}`] = sourceNameObj.name
 				}
 			} else {
-				self.log('debug', `UpdateVariableValues: No source found for ${eff.id}_${bus.id}`)
+				self.logVerbose(`UpdateVariableValues: No source found for ${eff.id}_${bus.id}`)
 			}
 		}
 	}
@@ -117,7 +117,7 @@ export function UpdateVariableValues(self: xvsInstance): void {
 		if (sourceNameObj) {
 			variableObj[`source_${source.id}`] = sourceNameObj.name
 		} else {
-			self.log('debug', `UpdateVariableValues: No source name found for ${source.id}`)
+			self.logVerbose(`UpdateVariableValues: No source name found for ${source.id}`)
 		}
 	}
 
@@ -133,7 +133,7 @@ export function UpdateVariableValues(self: xvsInstance): void {
 				variableObj[`${aux.id}`] = sourceNameObj.name
 			}
 		} else {
-			self.log('debug', `UpdateVariableValues: No source found for ${aux.id}`)
+			self.logVerbose(`UpdateVariableValues: No source found for ${aux.id}`)
 		}
 	}
 
@@ -149,7 +149,7 @@ export function UpdateVariableValues(self: xvsInstance): void {
 				variableObj[`${fm.id}`] = sourceNameObj.name
 			}
 		} else {
-			self.log('debug', `UpdateVariableValues: No source found for ${fm.id}`)
+			self.logVerbose(`UpdateVariableValues: No source found for ${fm.id}`)
 		}
 	}
 

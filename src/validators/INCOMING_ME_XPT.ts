@@ -31,14 +31,13 @@ export function INCOMING_ME_XPT(self: xvsInstance, buffer: Buffer): boolean {
 	const foundSource = SOURCES[self.config.model].find((obj) => obj.byte1 === data1 && obj.byte2 === data2)
 
 	if (!foundSource) {
-		self.log('debug', `INCOMING: MEXPT: (NO SOURCE MATCH) ${JSON.stringify({ foundME, foundBus, foundSource })}`)
+		self.logVerbose(`INCOMING: MEXPT: (NO SOURCE MATCH) ${JSON.stringify({ foundME, foundBus, foundSource })}`)
 		self.log('error', 'INCOMING ME XPT - NO SOURCE MATCH')
 		return false
 	}
 
 	// TODO: handle feedbacks for ME XPT
-	self.log(
-		'debug',
+	self.logVerbose(
 		`INCOMING: MEXPT: ${JSON.stringify(foundME)} ${JSON.stringify(foundBus)} ${JSON.stringify(foundSource)}`,
 	)
 
