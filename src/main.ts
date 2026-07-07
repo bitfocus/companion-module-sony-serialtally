@@ -44,6 +44,7 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 	// When module gets deleted
 	async destroy(): Promise<void> {
 		this.log('debug', 'destroy')
+		api.stopConnection(this)
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {

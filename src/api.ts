@@ -18,9 +18,56 @@ import {
 //import { CheckVariables } from './variables.js'
 import { INCOMING_HANDLE } from './validators/index.js'
 
+export function stopConnection(self: xvsInstance): void {
+	self.log('debug', 'stopConnection')
+
+	if (self.reconnectInterval) {
+		clearInterval(self.reconnectInterval)
+		self.reconnectInterval = undefined
+	}
+
+	if (self.outputTimer) {
+		clearInterval(self.outputTimer)
+		self.outputTimer = undefined
+	}
+
+	if (self.xptInterval) {
+		clearTimeout(self.xptInterval)
+		self.xptInterval = undefined
+	}
+
+	if (self.sourceNameUpdateTimer) {
+		clearTimeout(self.sourceNameUpdateTimer)
+		self.sourceNameUpdateTimer = undefined
+	}
+
+	if (self.gpioUpdateTimer) {
+		clearTimeout(self.gpioUpdateTimer)
+		self.gpioUpdateTimer = undefined
+	}
+
+	if (self.tallyUpdateTimer) {
+		clearTimeout(self.tallyUpdateTimer)
+		self.tallyUpdateTimer = undefined
+	}
+
+	if (self.tcp !== undefined) {
+		self.tcp.destroy()
+		self.tcp = undefined
+	}
+
+	self.PROTOCOL_STATE = 'IDLE'
+	self.incomingData = Buffer.alloc(0)
+	self.incomingCommandQueue = []
+	self.outgoingCommandQueue = []
+}
+
 export function initConnection(self: xvsInstance): void {
 	//create socket connection
 	self.log('debug', 'initConnection')
+
+	//make sure any previous connection/timers are torn down before we open a new one
+	stopConnection(self)
 
 	//check the config for the interval rate and update the global variable
 	if (self.config.intervalRate) {
@@ -102,18 +149,20 @@ export function initConnection(self: xvsInstance): void {
 			self.PROTOCOL_STATE = 'IDLE'
 			self.updateStatus(InstanceStatus.UnknownError, 'Connection error')
 
-			//if econnrefused, start a reeconnect interval
+			//if econnrefused, schedule a single reconnect attempt
 			if (String(err).indexOf('ECONNREFUSED') > -1) {
-				//disconnect tcp
-				self.tcp.destroy()
-				self.tcp = undefined
 				self.log('info', 'Connection refused. Will attempt to reconnect in 30 seconds.')
 
-				//start reconnect
-				self.reconnectInterval = setInterval(() => {
+				//clear any pending reconnect before scheduling a new one
+				if (self.reconnectInterval) {
+					clearTimeout(self.reconnectInterval)
+				}
+
+				//initConnection() tears down the existing socket/timers before reconnecting
+				self.reconnectInterval = setTimeout(() => {
+					self.reconnectInterval = undefined
 					self.log('info', 'Attempting to reconnect...')
 					initConnection(self)
-					self.reconnectInterval = undefined
 				}, 30000)
 			}
 		})
