@@ -432,7 +432,11 @@ export function UpdateActions(self: xvsInstance): void {
 		],
 		callback: async (event) => {
 			const source: any = event.options.source
-			const name: string = await self.parseVariablesInString(event.options.name?.toString() ?? '')
+			if (!event.options.name || typeof event.options.name !== 'string') {
+				self.log('error', 'Source Name is required and must be a string')
+				return
+			}
+			const name: string = event.options.name
 			setSourceName(self, source, name)
 		},
 	}

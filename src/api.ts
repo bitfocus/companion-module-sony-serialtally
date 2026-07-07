@@ -272,8 +272,10 @@ export function setSourceName(self: xvsInstance, sourceId: string, name: string)
 	nameBuffer.copy(buffer, 6) //source name bytes
 	sendCommand(self, buffer)
 
-	//re-read the name back so variables and action labels reflect the change (positive feedback)
-	readSourceName(self, source)
+	// Re-read just this source after the write completes so variables and action labels reflect the change
+	setTimeout(() => {
+		readSourceName(self, source)
+	}, 300)
 }
 
 export function readTally(self: xvsInstance): void {
