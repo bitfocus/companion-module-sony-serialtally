@@ -142,7 +142,7 @@ export function UpdateFeedbacks(self: xvsInstance): void {
 		})
 
 		feedbacks.tallySource = {
-			name: 'Source is Tallied',
+			name: 'Selected Source Tally State',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: combineRgb(255, 0, 0),

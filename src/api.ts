@@ -259,7 +259,8 @@ export function setSourceName(self: xvsInstance, sourceId: string, name: string)
 	}
 
 	//source name is ASCII, max 16 characters (§12-4 Source Name Setup, Write)
-	const nameBuffer = Buffer.from(name.substring(0, 16), 'ascii')
+	const truncatedName = name.substring(0, 16)
+	const nameBuffer = Buffer.from(truncatedName, 'ascii')
 	const nameLength = nameBuffer.length
 
 	const buffer = Buffer.alloc(6 + nameLength)
@@ -272,10 +273,22 @@ export function setSourceName(self: xvsInstance, sourceId: string, name: string)
 	nameBuffer.copy(buffer, 6) //source name bytes
 	sendCommand(self, buffer)
 
-	// Re-read just this source after the write completes so variables and action labels reflect the change
+	// Update local cache immediately so variables and dropdowns update without lag
+	const foundSource = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === source.id)
+	if (!foundSource) {
+		self.DATA.sourceNames.push({ id: source.id, name: truncatedName })
+	} else {
+		foundSource.name = truncatedName
+	}
+	self.updateActions()
+	self.updateFeedbacks()
+	self.updatePresets()
+	self.updateVariableValues()
+
+	// Re-read just this source after the write is fully committed (2 seconds) to sync with actual switcher state
 	setTimeout(() => {
 		readSourceName(self, source)
-	}, 300)
+	}, 2000)
 }
 
 export function readTally(self: xvsInstance): void {
