@@ -45,6 +45,24 @@ export function INCOMING_SOURCE_NAME(self: xvsInstance, buffer: Buffer): boolean
 		}
 	}
 
+	// If we recently wrote a new name for this source, check whether this
+	// incoming response is stale
+	const pending = self.pendingSourceNameWrites.get(found.id)
+	if (pending) {
+		if (Date.now() < pending.expiresAt) {
+			// Guard is still active — only accept if the name matches what we wrote
+			if (name !== pending.name) {
+				self.logVerbose(
+					`INCOMING SOURCE NAME: ignoring stale name "${name}" for source ${found.id} (pending write: "${pending.name}")`,
+				)
+				return true // consumed the message, but don't update cache
+			}
+		} else {
+			// Guard expired, clean it up
+			self.pendingSourceNameWrites.delete(found.id)
+		}
+	}
+
 	//search the self.sourceNames array for the source name based on the found id, if it's not there, add it.
 	const foundSource = self.DATA.sourceNames.find((obj: { id: number }) => obj.id === found?.id)
 	if (!foundSource) {

@@ -21,34 +21,33 @@ export class xvsInstance extends InstanceBase<ModuleConfig> {
 		tally: {},
 	}
 
+	// Timers
 	public xptInterval: NodeJS.Timeout | undefined = undefined
 	public sourceNameUpdateTimer: NodeJS.Timeout | undefined = undefined
 	public gpioUpdateTimer: NodeJS.Timeout | undefined = undefined
+	public outputTimer: NodeJS.Timeout | undefined = undefined
+	public sourceNameRereadTimers: Map<number, NodeJS.Timeout> = new Map()
 
-	public INTERVAL_RATE = 500 //ms, how often to update variables and feedbacks, redefinable in config
-
+	// Update Interval
+	public INTERVAL_RATE = 500
 	public INTERVAL: any = undefined
-	public PROTOCOL_STATE: 'IDLE' | 'WAITING' | 'OK' = 'IDLE'
 
+	// Data
 	public incomingData = Buffer.alloc(0)
 	public incomingCommandQueue: Array<Buffer> = []
 	public outgoingCommandQueue: Array<Buffer> = []
-	public outputTimer: NodeJS.Timeout | undefined = undefined
+	public pendingSourceNameWrites: Map<number, { name: string; expiresAt: number }> = new Map()
 
-	public reconnectInterval: NodeJS.Timeout | undefined = undefined
-
-	//tracks whether we have reached a connected (ACK received) state, so we only
-	//log the "connection refused, will reconnect" notice once per disconnect rather
-	//than on every failed reconnect attempt
+	// Connection
+	public PROTOCOL_STATE: 'IDLE' | 'WAITING' | 'OK' = 'IDLE'
 	public wasConnected: boolean = false
+	public reconnectInterval: NodeJS.Timeout | undefined = undefined
 
 	async init(config: ModuleConfig): Promise<void> {
 		await this.configUpdated(config)
 	}
 
 	// Debug logging that only fires when verbose logging is enabled in the config.
-	// Used for high-frequency messages (incoming data, variable updates) that would
-	// otherwise spam the log on every poll cycle.
 	logVerbose(message: string): void {
 		if (this.config?.verbose) {
 			this.log('debug', message)

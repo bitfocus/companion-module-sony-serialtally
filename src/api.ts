@@ -46,6 +46,13 @@ export function stopConnection(self: xvsInstance): void {
 		self.gpioUpdateTimer = undefined
 	}
 
+	// Cancel any pending source name re-read timers and clear write guards
+	for (const timer of self.sourceNameRereadTimers.values()) {
+		clearTimeout(timer)
+	}
+	self.sourceNameRereadTimers.clear()
+	self.pendingSourceNameWrites.clear()
+
 	if (self.tcp !== undefined) {
 		self.tcp.destroy()
 		self.tcp = undefined
@@ -266,6 +273,15 @@ export function setSourceName(self: xvsInstance, sourceId: string, name: string)
 	buffer.writeUInt8(source.byte1, 4) //source number byte 1
 	buffer.writeUInt8(source.byte2, 5) //source number byte 2
 	nameBuffer.copy(buffer, 6) //source name bytes
+
+	// Guard against stale read responses overwriting the local cache
+	const REREAD_DELAY = 5000
+	const GUARD_DURATION = REREAD_DELAY + 2000
+	self.pendingSourceNameWrites.set(source.id, {
+		name: truncatedName,
+		expiresAt: Date.now() + GUARD_DURATION,
+	})
+
 	sendCommand(self, buffer)
 
 	// Update local cache immediately so variables and dropdowns update without lag
@@ -280,10 +296,20 @@ export function setSourceName(self: xvsInstance, sourceId: string, name: string)
 	self.updatePresets()
 	self.updateVariableValues()
 
-	// Re-read just this source after the write is fully committed (2 seconds) to sync with actual switcher state
-	setTimeout(() => {
-		readSourceName(self, source)
-	}, 2000)
+	// Re-read just this source after the write is fully committed
+	const existingTimer = self.sourceNameRereadTimers.get(source.id)
+	if (existingTimer) {
+		clearTimeout(existingTimer)
+	}
+	self.sourceNameRereadTimers.set(
+		source.id,
+		setTimeout(() => {
+			self.sourceNameRereadTimers.delete(source.id)
+			// Clear the guard just before re-reading so the response is accepted
+			self.pendingSourceNameWrites.delete(source.id)
+			readSourceName(self, source)
+		}, REREAD_DELAY),
+	)
 }
 
 export function readTally(self: xvsInstance): void {
