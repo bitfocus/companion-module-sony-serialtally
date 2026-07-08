@@ -86,9 +86,9 @@ export function GetConfigFields(): SomeCompanionConfigField[] {
 			id: 'intervalRate',
 			label: 'Update Interval Rate (ms)',
 			width: 4,
-			min: 100,
+			min: 10,
 			max: 60000,
-			default: 500,
+			default: 100,
 			isVisible: (options) => !!options['advanced'],
 		},
 		{

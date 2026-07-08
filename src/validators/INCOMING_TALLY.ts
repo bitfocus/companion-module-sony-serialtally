@@ -68,16 +68,9 @@ export function INCOMING_TALLY(self: xvsInstance, buffer: Buffer): boolean {
 	// Each message is the full state for this group/color, so replace it wholesale.
 	self.DATA.tally[tallyKey(code.group, code.color)] = tallied
 
-	if (self.tallyUpdateTimer) {
-		clearTimeout(self.tallyUpdateTimer)
-	}
-
-	//tally data only affects the tally feedback
-	self.tallyUpdateTimer = setTimeout(() => {
-		self.updateVariableValues()
-		self.checkFeedbacks('tallySource')
-		delete self.tallyUpdateTimer
-	}, self.INTERVAL_RATE)
+	//tally data is latency-critical, update immediately without debounce
+	self.updateVariableValues()
+	self.checkFeedbacks('tallySource')
 
 	return true
 }

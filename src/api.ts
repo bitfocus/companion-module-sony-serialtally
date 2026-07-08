@@ -46,11 +46,6 @@ export function stopConnection(self: xvsInstance): void {
 		self.gpioUpdateTimer = undefined
 	}
 
-	if (self.tallyUpdateTimer) {
-		clearTimeout(self.tallyUpdateTimer)
-		self.tallyUpdateTimer = undefined
-	}
-
 	if (self.tcp !== undefined) {
 		self.tcp.destroy()
 		self.tcp = undefined
