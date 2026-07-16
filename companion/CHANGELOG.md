@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.0-beta.1] - 2026-07-07
+## [1.4.0] - 2026-07-16
 
 ### Added
 
@@ -17,8 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Some logs migrated to verbose debug logs to reduce log noise.
-- Spacings in labels updated to be consistent.
-- Node.js runtime target updated to Node 22.
+- Spacings in dropdown labels updated to be consistent.
+- Allow for faster Update Interval Rate (down to 100ms) in config.
+- Feedbacks are only checked when applicable to the incoming message type.
 
 ### Fixed
 
